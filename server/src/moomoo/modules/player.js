@@ -10,6 +10,7 @@ var mathSQRT = Math.sqrt;
 export class Player {
 
     is_owner = false;
+    is_admin = false; // NEW: for server/admin commands
     notify = new Set;
     chat_cooldown = 0;
     clan_cooldown = 0;
