@@ -373,7 +373,20 @@ var youtuberList = [{
 }];
 
 var tmpYoutuber = youtuberList[UTILS.randInt(0, youtuberList.length - 1)];
-featuredYoutuber.innerHTML = "<a target='_blank' class='ytLink' href='" + tmpYoutuber.link + "'><i class='material-icons' style='vertical-align: top;'>&#xE064;</i> " + tmpYoutuber.name + "</a>";
+(function() {
+    UTILS.removeAllChildren(featuredYoutuber);
+    var link = document.createElement('a');
+    link.target = '_blank';
+    link.href = tmpYoutuber.link;
+    link.className = 'ytLink';
+    var icon = document.createElement('i');
+    icon.className = 'material-icons';
+    icon.style.verticalAlign = 'top';
+    icon.textContent = '🎥';
+    link.appendChild(icon);
+    link.appendChild(document.createTextNode(' ' + tmpYoutuber.name));
+    featuredYoutuber.appendChild(link);
+})();
 
 var inWindow = true;
 window.onblur = function () {
@@ -401,7 +414,14 @@ function showLoadingText(text) {
     menuCardHolder.style.display = "none";
     diedText.style.display = "none";
     loadingText.style.display = "block";
-    loadingText.innerHTML = text + "<a href='javascript:window.location.href=window.location.href' class='ytLink'>reload</a>";
+    UTILS.removeAllChildren(loadingText);
+    loadingText.appendChild(document.createTextNode(text));
+    var reloadLink = document.createElement('a');
+    reloadLink.href = '#';
+    reloadLink.className = 'ytLink';
+    reloadLink.textContent = 'reload';
+    reloadLink.onclick = function(e) { e.preventDefault(); window.location.reload(); };
+    loadingText.appendChild(reloadLink);
 }
 
 function bindEvents() {
@@ -1372,15 +1392,15 @@ function toggleSettings() {
 }
 
 function updateSkinColorPicker() {
-    var tmpHTML = "";
+    UTILS.removeAllChildren(skinColorHolder);
     for (var i = 0; i < config.skinColors.length; ++i) {
-        if (i == skinColor) {
-            tmpHTML += ("<div class='skinColorItem activeSkin' style='background-color:" + config.skinColors[i] + "' onclick='selectSkinColor(" + i + ")'> </div>");
-        } else {
-            tmpHTML += ("<div class='skinColorItem' style='background-color:" + config.skinColors[i] + "' onclick='selectSkinColor(" + i + ")'> </div>");
-        }
+        var colorDiv = document.createElement('div');
+        colorDiv.className = 'skinColorItem' + (i == skinColor ? ' activeSkin' : '');
+        colorDiv.style.backgroundColor = config.skinColors[i];
+        colorDiv.textContent = ' ';
+        colorDiv.onclick = (function(idx) { return function() { selectSkinColor(idx); }; })(i);
+        skinColorHolder.appendChild(colorDiv);
     }
-    skinColorHolder.innerHTML = tmpHTML;
 }
 
 function selectSkinColor(index) {
@@ -1890,7 +1910,8 @@ function updateUpgrades(points, age) {
         if (tmpList.length) {
             upgradeHolder.style.display = "block";
             upgradeCounter.style.display = "block";
-            upgradeCounter.innerHTML = "Select Items (" + points + ")";
+            UTILS.removeAllChildren(upgradeCounter);
+            upgradeCounter.textContent = "Select Items (" + points + ")";
         } else {
             upgradeHolder.style.display = "none";
             upgradeCounter.style.display = "none";
@@ -1914,10 +1935,10 @@ function updateAge(xp, mxp, age) {
         player.age = age;
     }
     if (age == config.maxAge) {
-        ageText.innerHTML = "MAX AGE";
+        ageText.textContent = "MAX AGE";
         ageBarBody.style.width = "100%";
     } else {
-        ageText.innerHTML = "AGE " + player.age;
+        ageText.textContent = "AGE " + player.age;
         ageBarBody.style.width = ((player.XP / player.maxXP) * 100) + "%";
     }
 }
