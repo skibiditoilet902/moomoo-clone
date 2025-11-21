@@ -1625,18 +1625,36 @@ var moveKeys = {
     39: [1, 0]
 };
 
+var keyCodeMap = {
+    'KeyW': 87, 'ArrowUp': 38,
+    'KeyS': 83, 'ArrowDown': 40,
+    'KeyA': 65, 'ArrowLeft': 37,
+    'KeyD': 68, 'ArrowRight': 39,
+    'KeyE': 69, 'KeyC': 67, 'KeyX': 88,
+    'KeyQ': 81, 'KeyR': 82,
+    'Space': 32, 'Escape': 27, 'Enter': 13,
+    'Digit1': 49, 'Digit2': 50, 'Digit3': 51, 'Digit4': 52, 'Digit5': 53,
+    'Digit6': 54, 'Digit7': 55, 'Digit8': 56, 'Digit9': 57
+};
+
+function getKeyCode(event) {
+    if (event.code && keyCodeMap[event.code]) {
+        return keyCodeMap[event.code];
+    }
+    return event.keyCode || event.which || 0;
+}
+
 function resetMoveDir() {
     keys = {};
     io.send("e");
 }
 
-// Тут можно убрать чтобы человек двигался при открытом чате
 function keysActive() {
     return (chatHolder.style.display != "block");
 }
 
 function keyDown(event) {
-    var keyNum = event.which || event.keyCode || 0;
+    var keyNum = getKeyCode(event);
     if (keyNum == 27) {
         hideAllWindows();
     } else if (player && player.alive && keysActive()) {
@@ -1671,7 +1689,7 @@ window.addEventListener('keydown', UTILS.checkTrusted(keyDown));
 
 function keyUp(event) {
     if (player && player.alive) {
-        var keyNum = event.which || event.keyCode || 0;
+        var keyNum = getKeyCode(event);
         if (keyNum == 13) {
             toggleChat();
         } else if (keysActive()) {
@@ -2281,8 +2299,12 @@ function renderProjectile(x, y, obj, ctxt, debug) {
             tmpSprite.src = ".././img/weapons/" + tmpSrc + ".png";
             projectileSprites[tmpSrc] = tmpSprite;
         }
-        if (tmpSprite.isLoaded)
+        if (tmpSprite.isLoaded) {
             ctxt.drawImage(tmpSprite, x - (obj.scale / 2), y - (obj.scale / 2), obj.scale, obj.scale);
+        } else {
+            ctxt.fillStyle = "#888888";
+            renderCircle(x, y, obj.scale / 2, ctxt);
+        }
     } else if (obj.indx == 1) {
         ctxt.fillStyle = "#939393";
         renderCircle(x, y, obj.scale, ctxt);
@@ -2426,6 +2448,11 @@ function renderSkin(index, ctxt, parentSkin, owner) {
     }
     if (tmpSkin.isLoaded) {
         ctxt.drawImage(tmpSkin, -tmpObj.scale / 2, -tmpObj.scale / 2, tmpObj.scale, tmpObj.scale);
+    } else {
+        ctxt.fillStyle = "#666666";
+        ctxt.globalAlpha = 0.4;
+        ctxt.fillRect(-tmpObj.scale / 2, -tmpObj.scale / 2, tmpObj.scale, tmpObj.scale);
+        ctxt.globalAlpha = 1;
     }
     if (!parentSkin && tmpObj.topSprite) {
         ctxt.save();
@@ -2941,6 +2968,11 @@ function renderAI(obj, ctxt) {
     if (tmpSprite.isLoaded) {
         var tmpScale = obj.scale * 1.2 * (obj.spriteMlt || 1);
         ctxt.drawImage(tmpSprite, -tmpScale, -tmpScale, tmpScale * 2, tmpScale * 2);
+    } else {
+        ctxt.fillStyle = "#777777";
+        ctxt.globalAlpha = 0.5;
+        renderCircle(0, 0, obj.scale, ctxt);
+        ctxt.globalAlpha = 1;
     }
 }
 
@@ -3260,4 +3292,3 @@ window.selectSkinColor = selectSkinColor;
 window.changeStoreIndex = changeStoreIndex;
 window.switchServerMode = switchServerMode;
 window.incrementPacketCounter = incrementPacketCounter;
-window.config = config;
