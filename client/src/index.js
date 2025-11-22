@@ -2328,16 +2328,20 @@ function renderProjectile(x, y, obj, ctxt, debug) {
             tmpSprite = new Image();
             tmpSprite.onload = function () {
                 this.isLoaded = true;
+                this.onload = null;
             }
-            tmpSprite.src = ".././img/weapons/" + tmpSrc + ".png";
+            tmpSprite.src = "../img/weapons/" + tmpSrc + ".png";
             projectileSprites[tmpSrc] = tmpSprite;
         }
         if (tmpSprite.isLoaded) {
             ctxt.drawImage(tmpSprite, x - (obj.scale / 2), y - (obj.scale / 2), obj.scale, obj.scale);
         } else {
             ctxt.save();
-            ctxt.fillStyle = "#888888";
-            renderCircle(x, y, obj.scale / 2, ctxt);
+            ctxt.globalAlpha = 0.6;
+            ctxt.fillStyle = "#555555";
+            ctxt.beginPath();
+            ctxt.arc(x, y, 4, 0, Math.PI * 2);
+            ctxt.fill();
             ctxt.restore();
         }
     } else if (obj.indx == 1) {
