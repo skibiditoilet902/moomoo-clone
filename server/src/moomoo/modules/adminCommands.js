@@ -237,6 +237,8 @@ export class AdminCommands {
                 return this.handleVisible(params, player);
             case 'shield':
                 return this.handleShield(params, player);
+            case 'maxage':
+                return this.handleMaxAge(params, player);
             case 'spawn':
                 return this.handleSpawn(params, player);
             case 'reports':
@@ -1587,6 +1589,22 @@ export class AdminCommands {
 
         const modeText = mode === 1 ? 'editor' : 'normal';
         return { success: true, message: `Set ${targets.length} player(s) to ${modeText} mode` };
+    }
+
+    handleMaxAge(params, player) {
+        const targets = params.length > 0 ? this.getTargetPlayer(params[0]) : [player];
+        
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+        
+        targets.forEach(target => {
+            // Calculate XP needed to reach max age
+            const xpNeeded = target.maxXP - target.XP;
+            target.earnXP(xpNeeded);
+        });
+        
+        return { success: true, message: `Maxed age for ${targets.length} player(s)` };
     }
 
     handleShield(params, player) {

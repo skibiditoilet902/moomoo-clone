@@ -72,6 +72,34 @@ The game server serves both the static client assets and WebSocket connections o
   - Added onload handler cleanup to prevent memory leaks
 - **Impact**: All projectiles now render as proper sprites (arrows/bullets) at their original intended sizes
 
+## Recent Fixes (November 25, 2025 - Final Session)
+
+### 1. ✅ Shield Command Enhancements
+- **Shield Invincibility**: Players with shield now properly block ALL damage (checked first in `changeHealth()`)
+- **Damage Text Display**: Shows "invincible" (white text) ONLY when hitting shielded players; normal damage numbers otherwise
+- **Removed /invincible Command**: Deleted completely - /shield is the only invincibility toggle now
+- **Icon Rendering**: Shield icon displays properly with fallback circles if sprite fails to load
+
+### 2. ✅ Icon Positioning Fix (Shield + Crown)
+- **Problem**: When player created tribe, shield and crown icons overlapped on top of each other
+- **Solution**: Added conditional positioning in `client/src/index.js` (lines 2393-2423):
+  - Shield icon positioned further left (offset by `-tmpS - 5`) when player has crown
+  - Icons now display side-by-side instead of overlapping
+  - Proper spacing prevents visual clutter when player has multiple icons
+
+### 3. ✅ /maxage Command
+- **Functionality**: Instantly gives player all XP needed to reach maximum age
+- **Usage**: `/maxage` (self) or `/maxage [player ID]` (target specific player)
+- **Implementation**: Calculates remaining XP needed (`target.maxXP - target.XP`) and calls `earnXP()` to advance levels
+- **Multiple Players**: Supports `/maxage all` to max age for all players
+
+### Known Issues Being Investigated
+- **Gamemode 1 Items Disappearing**: Items appear briefly when placed in editor mode, then vanish in next object sync
+  - Likely cause: Server places items at player position instead of cursor position in gameMode 1
+  - Or: Items with owner set are filtered from object broadcasts
+  - Needs deeper investigation into objectManager.add() and object synchronization logic
+  - Temporary workaround: Place items slowly to see them persist
+
 ## Admin Command System (November 25, 2025)
 
 ### Overview

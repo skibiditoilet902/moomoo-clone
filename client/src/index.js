@@ -2387,36 +2387,37 @@ function updateGame() {
                             mainContext.fillStyle = "#ff0000";
                             mainContext.fillText(idText, tmpObj.x - xOffset, idY);
                         }
+                        // Render shield and crown icons with proper spacing
+                        var baseIconX = tmpObj.x - xOffset - (config.crownIconScale / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
+                        var iconY = (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (config.crownIconScale / 2) - 5;
+                        var tmpS = config.crownIconScale;
+                        
                         // Shield icon if player has shield
                         if (tmpObj.hasShield) {
-                            var tmpS = config.crownIconScale;
-                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
-                            var tmpY = (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5;
+                            // If player also has crown, offset shield further left
+                            var shieldX = tmpObj.isLeader ? baseIconX - tmpS - 5 : baseIconX;
                             
                             if (iconSprites["shield"] && iconSprites["shield"].isLoaded) {
                                 try {
-                                    mainContext.drawImage(iconSprites["shield"], tmpX, tmpY, tmpS, tmpS);
+                                    mainContext.drawImage(iconSprites["shield"], shieldX, iconY, tmpS, tmpS);
                                 } catch(e) {
                                     console.error("Failed to draw shield:", e);
                                     // Draw fallback circle
                                     mainContext.fillStyle = "#4f9fff";
                                     mainContext.beginPath();
-                                    mainContext.arc(tmpX + tmpS/2, tmpY + tmpS/2, tmpS/2, 0, Math.PI * 2);
+                                    mainContext.arc(shieldX + tmpS/2, iconY + tmpS/2, tmpS/2, 0, Math.PI * 2);
                                     mainContext.fill();
                                 }
                             } else {
                                 // Draw fallback circle if image not loaded
                                 mainContext.fillStyle = "#4f9fff";
                                 mainContext.beginPath();
-                                mainContext.arc(tmpX + tmpS/2, tmpY + tmpS/2, tmpS/2, 0, Math.PI * 2);
+                                mainContext.arc(shieldX + tmpS/2, iconY + tmpS/2, tmpS/2, 0, Math.PI * 2);
                                 mainContext.fill();
                             }
                         }
                         if (tmpObj.isLeader && iconSprites["crown"].isLoaded) {
-                            var tmpS = config.crownIconScale;
-                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
-                            mainContext.drawImage(iconSprites["crown"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) -
-                                config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
+                            mainContext.drawImage(iconSprites["crown"], baseIconX, iconY, tmpS, tmpS);
                         }
                         if (tmpObj.iconIndex == 1 && iconSprites["skull"].isLoaded) {
                             var tmpS = config.crownIconScale;
