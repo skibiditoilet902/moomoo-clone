@@ -617,23 +617,11 @@ export class AdminCommands {
     }
 
     handleStrongBonk(params, player) {
-        if (params.length < 2) {
-            return { success: false, message: 'Usage: /strongbonk [player ID or "self" or "all"] [intensity (0 to reset, 1-10 range)]' };
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /strongbonk [intensity (0 to reset, 1-10 range)]' };
         }
         
-        let targets = [];
-        
-        if (params[0].toLowerCase() === 'self') {
-            targets = [player];
-        } else {
-            targets = this.getTargetPlayer(params[0]);
-        }
-        
-        const intensity = parseFloat(params[1]);
-        
-        if (targets.length === 0) {
-            return { success: false, message: 'Player not found' };
-        }
+        const intensity = parseFloat(params[0]);
         
         if (!Number.isFinite(intensity)) {
             return { success: false, message: 'Intensity must be a finite number' };
@@ -641,12 +629,10 @@ export class AdminCommands {
         
         const clampedIntensity = intensity === 0 ? 1 : Math.max(0.1, Math.min(intensity, 10));
         
-        targets.forEach(target => {
-            target.knockbackMultiplier = clampedIntensity;
-        });
+        player.knockbackMultiplier = clampedIntensity;
         
         const intensityDisplay = clampedIntensity === 1 ? 'normal' : `${clampedIntensity}x`;
-        return { success: true, message: `Set knockback to ${intensityDisplay} for ${targets.length} player(s)` };
+        return { success: true, message: `Set your knockback to ${intensityDisplay}` };
     }
 
     handleRandomTeleport(params, player) {
