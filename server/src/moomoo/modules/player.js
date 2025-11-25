@@ -385,7 +385,15 @@ export class Player {
                 this.yVel = 0;
             } else {
                 var buildPenalty = (this.buildIndex >= 0) ? (config.physics ? config.physics.buildingSpeedPenalty : 0.5) : 1;
+                // Editor mode: always move at maximum speed
+                if (this.gameMode === 1) {
+                    buildPenalty = 1;
+                }
                 var spdMult = buildPenalty * (items.weapons[this.weaponIndex].spdMult || 1) * (this.skin ? this.skin.spdMult || 1 : 1) * (this.tail ? this.tail.spdMult || 1 : 1) * (this.y <= config.snowBiomeTop ? this.skin && this.skin.coldM ? 1 : config.snowSpeed : 1) * this.slowMult * (this.speedMultiplier || 1);
+                // Editor mode: speed boost
+                if (this.gameMode === 1) {
+                    spdMult *= 2.5;
+                }
                 if (!this.zIndex && this.y >= config.mapScale / 2 - config.riverWidth / 2 && this.y <= config.mapScale / 2 + config.riverWidth / 2) {
                     if (this.skin && this.skin.watrImm) {
                         spdMult *= (config.water ? config.water.immunitySpeedMultiplier : 0.75);

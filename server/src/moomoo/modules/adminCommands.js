@@ -1563,6 +1563,30 @@ export class AdminCommands {
         targets.forEach(target => {
             target.gameMode = mode;
             target.sentTo = {}; // Force resync to client
+            
+            // If entering editor mode, unlock all items
+            if (mode === 1) {
+                // Unlock all buildings
+                for (let i = 0; i < items.list.length; i++) {
+                    target.items.push(i);
+                }
+                // Unlock all weapons
+                for (let i = 0; i < items.weapons.length; i++) {
+                    if (!target.weapons.includes(i)) {
+                        target.weapons.push(i);
+                    }
+                }
+                // Unlock all accessories
+                for (let i = 0; i < hats.length; i++) {
+                    target.skins[hats[i].id] = 1;
+                }
+                for (let i = 0; i < accessories.length; i++) {
+                    target.tails[accessories[i].id] = 1;
+                }
+                // Send updated inventory
+                target.needsResourceSync = true;
+            }
+            
             const modeText = mode === 1 ? 'editor' : 'normal';
             target.send('6', -1, `Game mode changed to ${modeText}`);
         });

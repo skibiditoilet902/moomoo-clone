@@ -433,9 +433,8 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
         // Editor mode: place at cursor position
         if (this.gameMode === 1) {
             // Convert screen coordinates to world coordinates
-            // Uses the global xOffset and yOffset variables
-            tmpX = (mouseX - screenWidth / 2) / 50 + camX;
-            tmpY = (mouseY - screenHeight / 2) / 50 + camY;
+            tmpX = camX + (mouseX - screenWidth / 2);
+            tmpY = camY + (mouseY - screenHeight / 2);
         } else {
             // Normal mode: place in front of player
             var tmpS = (this.scale + item.scale + (item.placeOffset || 0));
@@ -489,7 +488,10 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
             }
             if (worked) {
                 this.useRes(item);
-                this.buildIndex = -1;
+                // Editor mode: keep building mode active, otherwise deselect
+                if (this.gameMode !== 1) {
+                    this.buildIndex = -1;
+                }
             }
         }
     };
