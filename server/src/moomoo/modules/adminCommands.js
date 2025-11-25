@@ -237,8 +237,6 @@ export class AdminCommands {
                 return this.handleVisible(params, player);
             case 'shield':
                 return this.handleShield(params, player);
-            case 'invincible':
-                return this.handleInvincible(params, player);
             case 'spawn':
                 return this.handleSpawn(params, player);
             case 'reports':
@@ -1217,19 +1215,6 @@ export class AdminCommands {
         return { success: true, message: `Made ${targets.length} player(s) visible` };
     }
 
-    handleInvincible(params, player) {
-        const targets = params.length > 0 ? this.getTargetPlayer(params[0]) : [player];
-        
-        if (targets.length === 0) {
-            return { success: false, message: 'Player not found' };
-        }
-        
-        targets.forEach(target => {
-            target.isInvincible = !target.isInvincible;
-        });
-        
-        return { success: true, message: `Toggled invincibility for ${targets.length} player(s)` };
-    }
 
     handleSpawn(params, player) {
         if (params.length < 2) {
@@ -1590,11 +1575,9 @@ export class AdminCommands {
                 for (let i = 0; i < accessories.length; i++) {
                     target.tails[accessories[i].id] = 1;
                 }
-                // Send updated inventory to client (but NOT if in gameMode 1)
-                if (target.gameMode !== 1) {
-                    target.send('V', target.items, 0);  // Send buildings
-                    target.send('V', target.weapons, 1);  // Send weapons
-                }
+                // Send updated inventory to client
+                target.send('V', target.items, 0);  // Send buildings
+                target.send('V', target.weapons, 1);  // Send weapons
                 target.needsResourceSync = true;
             }
             

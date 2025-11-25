@@ -591,6 +591,14 @@ export class Player {
 
         // CHANGE HEALTH:
         this.changeHealth = function(amount, doer) {
+            // Shield blocks all damage
+            if (this.hasShield && amount < 0) {
+                // Send "invincible" text ONLY to the attacker
+                if (doer && doer.canSee(this)) {
+                    doer.send("8", Math.round(this.x), Math.round(this.y), 0, 1);
+                }
+                return false; // No damage dealt
+            }
             // Editor mode players cannot take damage
             if (this.gameMode === 1 && amount < 0) {
                 return false;
@@ -626,8 +634,9 @@ export class Player {
                     players[i].send("O", this.sid, Math.round(this.health));
                 }
             }
-            if (doer && doer.canSee(this) && !(doer == this && amount < 0)) {
-                doer.send("8", Math.round(this.x), Math.round(this.y), Math.round(-amount), 1);
+            // Send damage text only for actual damage (negative amount)
+            if (doer && doer.canSee(this) && !(doer == this && amount < 0) && amount !== 0) {
+                doer.send("8", Math.round(this.x), Math.round(this.y), Math.round(-amount), 0);
             }
             return true;
         };

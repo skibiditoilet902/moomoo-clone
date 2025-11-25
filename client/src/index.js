@@ -2390,7 +2390,7 @@ function updateGame() {
                         // Shield icon if player has shield
                         if (tmpObj.hasShield) {
                             var tmpS = config.crownIconScale;
-                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad - tmpS - 5;
+                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
                             var tmpY = (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5;
                             
                             if (iconSprites["shield"] && iconSprites["shield"].isLoaded) {
