@@ -136,7 +136,8 @@ function connectSocket() {
         "9": pingMap,
         "0": pingSocketResponse,
         "ADMIN_LOGIN": adminLoginShowPlayers,
-        "SHOW_IDS": showIDsOnScreen
+        "SHOW_IDS": showIDsOnScreen,
+        "SHOW_WARNING": showWarning
     });
 }
 
@@ -305,6 +306,7 @@ var allianceHolder = document.getElementById("allianceHolder");
 var allianceManager = document.getElementById("allianceManager");
 var mapDisplay = document.getElementById("mapDisplay");
 var diedText = document.getElementById("diedText");
+var warningText = document.getElementById("warningText");
 var skinColorHolder = document.getElementById("skinColorHolder");
 var mapContext = mapDisplay.getContext("2d");
 mapDisplay.width = 300;
@@ -1897,6 +1899,27 @@ function showIDsOnScreen(data) {
 }
 
 var deathTextScale = 99999;
+var warningTextScale = 99999;
+
+function showWarning(warningCount) {
+    try {
+        if (warningText) {
+            warningText.style.display = "block";
+            warningText.style.fontSize = "0px";
+            warningText.innerText = `YOU HAVE BEEN WARNED (${warningCount}/5)`;
+        }
+        
+        warningTextScale = 0;
+        
+        setTimeout(function () {
+            if (warningText) {
+                warningText.style.display = "none";
+            }
+        }, 3000); // Display for 3 seconds
+    } catch (e) {
+        console.error("Error in showWarning:", e);
+    }
+}
 
 function killPlayer() {
     try {
@@ -2166,6 +2189,10 @@ function updateGame() {
         if (deathTextScale < 120) {
             deathTextScale += 0.1 * delta;
             diedText.style.fontSize = Math.min(Math.round(deathTextScale), 120) + "px";
+        }
+        if (warningTextScale < 120) {
+            warningTextScale += 0.1 * delta;
+            warningText.style.fontSize = Math.min(Math.round(warningTextScale), 120) + "px";
         }
         if (player) {
             var tmpDist = UTILS.getDistance(camX, camY, player.x, player.y);

@@ -1326,10 +1326,19 @@ export class AdminCommands {
 
     handleWarn(params, player) {
         if (params.length < 1) {
-            return { success: false, message: 'Usage: /warn [player ID]' };
+            return { success: false, message: 'Usage: /warn [player ID|others]' };
         }
         
-        const targets = this.getTargetPlayer(params[0]);
+        let targets = [];
+        const targetId = params[0].toLowerCase();
+        
+        if (targetId === 'others') {
+            // Warn all players except the admin
+            targets = this.game.players.filter(p => p.sid !== player.sid && p.alive);
+        } else {
+            // Warn specific player
+            targets = this.getTargetPlayer(params[0], player);
+        }
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
@@ -1339,10 +1348,12 @@ export class AdminCommands {
             const warnings = (this.warnings.get(target.sid) || 0) + 1;
             this.warnings.set(target.sid, warnings);
             
-            target.send('6', -1, `Warning ${warnings}/5: Violating server rules`);
+            // Send warning notification packet with warning count
+            target.send('SHOW_WARNING', warnings);
             
             if (warnings >= 5) {
-                this.handleBan([target.sid.toString(), '604800'], player);
+                // Ban for 3 days (259200 seconds = 3 days)
+                this.handleBan([target.sid.toString(), '259200'], player);
             }
         });
         
