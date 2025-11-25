@@ -437,7 +437,7 @@ export class AdminCommands {
                 case 'weaponspeed':
                 case 'speed':
                     // Higher value = faster reload/attack. weaponSpeed is a multiplier where > 1 speeds up
-                    target.weaponSpeed = Math.max(0.1, parseFloat(value));
+                    target.weaponSpeed = parseFloat(value);
                     break;
             }
         });
