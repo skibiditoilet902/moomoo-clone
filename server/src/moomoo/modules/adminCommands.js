@@ -164,10 +164,6 @@ export class AdminCommands {
                     return this.handleAllAccessories(params, player);
                 }
                 break;
-            case 'weapongive':
-                return this.handleWeaponGive(params, player);
-            case 'weaponremove':
-                return this.handleWeaponRemove(params, player);
             case 'setweaponspeed':
                 return this.handleSetWeaponSpeed(params, player);
             case 'weaponvariant':
@@ -516,93 +512,6 @@ export class AdminCommands {
         });
         
         return { success: true, message: `Set ${attribute} to ${value} for ${targets.length} player(s)` };
-    }
-
-    findWeaponByName(weaponName) {
-        const name = weaponName.toLowerCase();
-        return items.weapons.find(w => w.name && w.name.toLowerCase() === name);
-    }
-
-    handleWeaponGive(params, player) {
-        if (params.length < 1) {
-            return { success: false, message: 'Usage: /weapongive [weapon name] [player ID|all|others] (default: self)' };
-        }
-        
-        const weaponName = params[0];
-        const weapon = this.findWeaponByName(weaponName);
-        
-        if (!weapon) {
-            return { success: false, message: `Weapon "${weaponName}" not found` };
-        }
-        
-        // Default to self if no target specified
-        const targetId = params.length > 1 ? params[1] : 'self';
-        let targets = [];
-        
-        if (targetId === 'self') {
-            targets = [player];
-        } else {
-            targets = this.getTargetPlayer(targetId, player);
-        }
-        
-        if (targets.length === 0) {
-            return { success: false, message: 'Player not found' };
-        }
-        
-        let addedCount = 0;
-        targets.forEach(target => {
-            // Weapons are stored as object: {type: weaponId}
-            // type 0 = melee, type 1 = ranged
-            if (typeof target.weapons !== 'object') {
-                target.weapons = {};
-            }
-            
-            // Only set weapon if player doesn't already have one of this type
-            if (!target.weapons[weapon.type]) {
-                target.weapons[weapon.type] = weapon.id;
-                addedCount++;
-            }
-        });
-        
-        return { success: true, message: `Gave ${weapon.name} to ${addedCount}/${targets.length} player(s)` };
-    }
-
-    handleWeaponRemove(params, player) {
-        if (params.length < 1) {
-            return { success: false, message: 'Usage: /weaponremove [weapon name] [player ID|all|others] (default: self)' };
-        }
-        
-        const weaponName = params[0];
-        const weapon = this.findWeaponByName(weaponName);
-        
-        if (!weapon) {
-            return { success: false, message: `Weapon "${weaponName}" not found` };
-        }
-        
-        // Default to self if no target specified
-        const targetId = params.length > 1 ? params[1] : 'self';
-        let targets = [];
-        
-        if (targetId === 'self') {
-            targets = [player];
-        } else {
-            targets = this.getTargetPlayer(targetId, player);
-        }
-        
-        if (targets.length === 0) {
-            return { success: false, message: 'Player not found' };
-        }
-        
-        let removedCount = 0;
-        targets.forEach(target => {
-            // Weapons are stored as object: {type: weaponId}
-            if (target.weapons && target.weapons[weapon.type]) {
-                delete target.weapons[weapon.type];
-                removedCount++;
-            }
-        });
-        
-        return { success: true, message: `Removed ${weapon.name} from ${removedCount}/${targets.length} player(s)` };
     }
 
     handleSetWeaponSpeed(params, player) {
