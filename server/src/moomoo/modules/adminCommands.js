@@ -463,7 +463,9 @@ export class AdminCommands {
         
         targets.forEach(target => {
             target.weaponVariant = variant;
-            this.game.server.broadcast('W', target.sid, variant);
+            for (let i = 0; i < this.game.players.length; ++i) {
+                this.game.players[i].send('W', target.sid, variant);
+            }
         });
         
         return { success: true, message: `Set weapon variant to ${variant} for ${targets.length} player(s)` };
