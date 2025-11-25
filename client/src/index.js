@@ -1865,6 +1865,7 @@ function adminLoginShowPlayers(allPlayers) {
 var playerIDsDisplayTime = 0;
 var playerIDsToDisplay = [];
 var playerIDsInfinite = false;
+var playerIDsLastRefresh = 0;
 
 function showIDsOnScreen(data) {
     try {
@@ -1873,6 +1874,7 @@ function showIDsOnScreen(data) {
             playerIDsDisplayTime = 0;
             playerIDsToDisplay = [];
             playerIDsInfinite = false;
+            playerIDsLastRefresh = 0;
             console.log("Player IDs display disabled");
             return;
         }
@@ -1883,17 +1885,18 @@ function showIDsOnScreen(data) {
             return;
         }
         
-        const players = Array.isArray(data.players) ? data.players : data;
-        playerIDsToDisplay = players;
+        const serverPlayers = Array.isArray(data.players) ? data.players : data;
+        playerIDsToDisplay = serverPlayers;
+        playerIDsLastRefresh = Date.now();
         
         if (data && data.action === 'toggle') {
             playerIDsDisplayTime = Infinity; // Display forever
             playerIDsInfinite = true;
-            console.log("Showing player IDs permanently:", players);
+            console.log("Showing player IDs permanently (toggle mode):", serverPlayers);
         } else {
             playerIDsDisplayTime = 10000; // Display for 10 seconds
             playerIDsInfinite = false;
-            console.log("Showing player IDs for 10 seconds:", players);
+            console.log("Showing player IDs for 10 seconds:", serverPlayers);
         }
     } catch (e) {
         console.error("Error in showIDsOnScreen:", e);
@@ -2182,6 +2185,11 @@ function prepareObjectRenderLists(xOffset, yOffset, delta) {
 
 function updateGame() {
     if (true) {
+        // Refresh player list when in toggle mode (every 1 second)
+        if (playerIDsInfinite && player && (!playerIDsLastRefresh || now - playerIDsLastRefresh >= 1000)) {
+            io.send("6", -1, "/id toggle");
+        }
+        
         if (player) {
             if (!lastSent || now - lastSent >= (1000 / config.clientSendRate)) {
                 lastSent = now;
@@ -2479,33 +2487,22 @@ function updateGame() {
         
         mainContext.fillText("=== PLAYER IDS ===", startX, startY);
         
-        // Always scan the live players list to show all current players except self
-        // This ensures new players appear instantly
-        var currentPlayerSID = player ? player.sid : -1;
-        var displayList = [];
-        
-        // Scan through all players
-        for (var i = 0; i < players.length; ++i) {
-            var p = players[i];
-            // Only show players (have weaponIndex property, not animals)
-            // Exclude the current player (the admin)
-            if (p && p.sid !== undefined && p.name !== undefined && 
-                p.weaponIndex !== undefined && p.sid !== currentPlayerSID) {
-                displayList.push(p);
-            }
-        }
+        // Use server-provided list from /id command (this updates every 1 second in toggle mode)
+        var displayList = Array.isArray(playerIDsToDisplay) ? playerIDsToDisplay : [];
         
         // Render the display list
         for (var i = 0; i < displayList.length; ++i) {
             var p = displayList[i];
-            var yPos = startY + 25 + (i * lineHeight);
-            mainContext.fillStyle = "#ffffff";
-            mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
+            if (p && p.sid !== undefined && p.name !== undefined) {
+                var yPos = startY + 25 + (i * lineHeight);
+                mainContext.fillStyle = "#ffffff";
+                mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
+            }
         }
         
-        // Debug logging on the 10-frame interval to reduce spam
+        // Debug logging on the 500ms interval to reduce spam
         if (Math.floor(now / 500) % 2 === 0) {
-            console.log("ID Display - Active: " + (playerIDsInfinite ? "toggle" : "10s") + ", Players: " + displayList.length, displayList);
+            console.log("ID Display - Active: " + (playerIDsInfinite ? "toggle (auto-refresh)" : "10s") + ", Players: " + displayList.length, displayList);
         }
         
         mainContext.restore();
