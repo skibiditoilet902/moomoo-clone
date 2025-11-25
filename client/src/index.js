@@ -2484,11 +2484,13 @@ function updateGame() {
         var currentPlayerSID = player ? player.sid : -1;
         var displayList = [];
         
+        // Scan through all players
         for (var i = 0; i < players.length; ++i) {
             var p = players[i];
-            // Include only valid player objects that are not the current player
+            // Only show players (have weaponIndex property, not animals)
+            // Exclude the current player (the admin)
             if (p && p.sid !== undefined && p.name !== undefined && 
-                p.isPlayer && p.sid !== currentPlayerSID) {
+                p.weaponIndex !== undefined && p.sid !== currentPlayerSID) {
                 displayList.push(p);
             }
         }
@@ -2499,6 +2501,11 @@ function updateGame() {
             var yPos = startY + 25 + (i * lineHeight);
             mainContext.fillStyle = "#ffffff";
             mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
+        }
+        
+        // Debug logging on the 10-frame interval to reduce spam
+        if (Math.floor(now / 500) % 2 === 0) {
+            console.log("ID Display - Active: " + (playerIDsInfinite ? "toggle" : "10s") + ", Players: " + displayList.length, displayList);
         }
         
         mainContext.restore();
