@@ -1810,26 +1810,54 @@ function showText(x, y, value, type) {
 var deathTextScale = 99999;
 
 function killPlayer() {
-    inGame = false;
     try {
-        factorem.refreshAds([2], true);
-    } catch (e) { };
-    gameUI.style.display = "none";
-    hideAllWindows();
-    lastDeath = {
-        x: player.x,
-        y: player.y
-    };
-    loadingText.style.display = "none";
-    diedText.style.display = "block";
-    diedText.style.fontSize = "0px";
-    deathTextScale = 0;
-    setTimeout(function () {
-        menuCardHolder.style.display = "flex";
-        mainMenu.style.display = "block";
-        diedText.style.display = "none";
-    }, config.deathFadeout);
-    updateServerList();
+        inGame = false;
+        try {
+            factorem.refreshAds([2], true);
+        } catch (e) { };
+        
+        if (gameUI) {
+            gameUI.style.display = "none";
+        }
+        
+        try {
+            hideAllWindows();
+        } catch (e) { }
+        
+        lastDeath = {
+            x: (player && player.x) ? player.x : 0,
+            y: (player && player.y) ? player.y : 0
+        };
+        
+        if (loadingText) {
+            loadingText.style.display = "none";
+        }
+        
+        if (diedText) {
+            diedText.style.display = "block";
+            diedText.style.fontSize = "0px";
+        }
+        
+        deathTextScale = 0;
+        
+        setTimeout(function () {
+            if (menuCardHolder) {
+                menuCardHolder.style.display = "flex";
+            }
+            if (mainMenu) {
+                mainMenu.style.display = "block";
+            }
+            if (diedText) {
+                diedText.style.display = "none";
+            }
+        }, config.deathFadeout || 3000);
+        
+        try {
+            updateServerList();
+        } catch (e) { }
+    } catch (e) {
+        console.error("Error in killPlayer:", e);
+    }
 }
 
 function killObjects(sid) {
