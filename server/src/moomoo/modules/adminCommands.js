@@ -1127,9 +1127,7 @@ export class AdminCommands {
         }
         
         for (let i = 0; i < amount; i++) {
-            const x = player.x + (Math.random() - 0.5) * 200;
-            const y = player.y + (Math.random() - 0.5) * 200;
-            this.game.ai_manager.spawn(x, y, 0, typeIndex);
+            this.game.ai_manager.spawn(player.x, player.y, 0, typeIndex);
         }
         
         return { success: true, message: `Spawned ${amount} ${type}(s) around you` };
