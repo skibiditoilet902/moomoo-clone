@@ -80,6 +80,8 @@ export class AiManager {
             speed: 0.0018,
             turnSpeed: 0.006,
             scale: 70,
+            viewRange: 800,
+            chargePlayer: true,
             drop: ["food", 100]
         }, {
             id: 6,
