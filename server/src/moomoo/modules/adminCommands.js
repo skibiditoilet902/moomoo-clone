@@ -472,9 +472,9 @@ export class AdminCommands {
         
         let targets = this.getTargetPlayer(params[0]);
         
-        // Exclude the admin running the command when using /kill all
+        // For /kill all, include everyone (including the admin)
         if (params[0] === 'all' || params[0] === 'every') {
-            targets = targets.filter(t => t.id !== player.id);
+            targets = this.game.players.filter(p => p.alive);
         }
         
         if (targets.length === 0) {
