@@ -478,14 +478,7 @@ export class AdminCommands {
         
         targets.forEach(target => {
             if (target.alive) {
-                target.health = 0;
-                target.alive = false;
-                target.send('D');
-                for (let i = 0; i < this.game.players.length; ++i) {
-                    if (this.game.players[i].sentTo[target.id]) {
-                        this.game.players[i].send('D', target.sid);
-                    }
-                }
+                target.changeHealth(-target.health, null);
             }
         });
         
