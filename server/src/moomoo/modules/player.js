@@ -280,7 +280,9 @@ export class Player {
                 this.zIndex,
                 Number.isFinite(this.clientCps) ? Math.max(0, Math.round(this.clientCps)) : 0,
                 Number.isFinite(this.clientPing) ? Math.max(-1, Math.round(this.clientPing)) : -1,
-                this.isAdmin ? 1 : 0
+                this.isAdmin ? 1 : 0,
+                this.hasShield ? 1 : 0,
+                this.isLeader ? 1 : 0
             ];
         };
 

@@ -100,6 +100,30 @@ The game server serves both the static client assets and WebSocket connections o
 - **Solution**: Removed `target.sentTo = {}` from BOTH handleShield and handleGameMode functions
 - **Result**: Commands now execute without corrupting player state - age and weapon stay intact
 
+### 5. ✅ WASD Movement in Gamemode 1 (CRITICAL FIX)
+- **Problem**: WASD keys were equipping items instead of moving player in editor mode
+- **Root Cause**: Item selection checks were happening BEFORE moveKeys check in keyDown handler
+- **Solution**: Reordered keyDown (line 1705) to check moveKeys FIRST before item selection
+- **Result**: Movement works perfectly in gamemode 1; items only select with 1-9 keys
+
+### 6. ✅ /maxage Only Giving 1 Age (CRITICAL FIX)
+- **Problem**: `/maxage` only advanced player 1 age instead of maxing completely
+- **Root Cause**: XP calculation only computed next level (`target.maxXP - target.XP`)
+- **Solution**: Added loop to calculate TOTAL XP needed across ALL remaining ages (adminCommands.js lines 1604-1614)
+- **Result**: `/maxage` now instantly advances to maximum age (39)
+
+### 7. ✅ Shield & Crown Icon Sync Issues (CRITICAL FIX)
+- **Problem**: Shield icon disappeared when toggled off; crown icon not rendering
+- **Root Cause**: hasShield and isLeader NOT included in getInfo() broadcast packet sent to all players
+  - They were only in D packet (initial player data), not continuous "a" packet (all player updates)
+  - Client also reading isLeader from wrong data index
+- **Solution**: 
+  - Added hasShield (index 16) and isLeader (index 17) to server getInfo() (player.js lines 287-288)
+  - Updated client to read 18 fields per player instead of 16
+  - Fixed isLeader to read from correct i+17 instead of i+8
+  - Updated loop to increment by 18 instead of 16 (index.js line 3434)
+- **Result**: Shield and crown icons now sync to all players in real-time
+
 ### Known Issues Being Investigated
 - **Gamemode 1 Items Disappearing**: Items appear briefly when placed in editor mode, then vanish in next object sync
   - Likely cause: Server places items at player position instead of cursor position in gameMode 1

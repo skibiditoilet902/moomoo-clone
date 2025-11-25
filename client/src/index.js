@@ -1698,7 +1698,10 @@ function keyDown(event) {
     } else if (player && player.alive && keysActive()) {
         if (!keys[keyNum]) {
             keys[keyNum] = 1;
-            if (keyNum == 69) {
+            // Check movement keys FIRST - they have priority over item selection
+            if (moveKeys[keyNum]) {
+                sendMoveDir();
+            } else if (keyNum == 69) {
                 sendAutoGather();
             } else if (keyNum == 67) {
                 updateMapMarker();
@@ -1712,8 +1715,6 @@ function keyDown(event) {
                 selectToBuild(player.items[0]);
             } else if (keyNum == 82) {
                 sendMapPing();
-            } else if (moveKeys[keyNum]) {
-                sendMoveDir();
             } else if (keyNum == 32) {
                 attackState = 1;
                 sendAtckState();
@@ -3416,7 +3417,6 @@ function updatePlayers(data) {
             tmpObj.weaponIndex = data[i + 5];
             tmpObj.weaponVariant = data[i + 6];
             tmpObj.team = data[i + 7];
-            tmpObj.isLeader = data[i + 8];
             tmpObj.skinIndex = data[i + 9];
             tmpObj.tailIndex = data[i + 10];
             tmpObj.iconIndex = data[i + 11];
@@ -3424,9 +3424,11 @@ function updatePlayers(data) {
             tmpObj.cps = typeof data[i + 13] === "number" ? Math.max(0, Math.round(data[i + 13])) : 0;
             tmpObj.ping = typeof data[i + 14] === "number" ? Math.max(-1, Math.round(data[i + 14])) : -1;
             tmpObj.isAdmin = data[i + 15] ? true : false;
+            tmpObj.hasShield = data[i + 16] ? true : false;
+            tmpObj.isLeader = data[i + 17] ? true : false;
             tmpObj.visible = true;
         }
-        i += 16;
+        i += 18;
     }
 }
 

@@ -1598,9 +1598,20 @@ export class AdminCommands {
         }
         
         targets.forEach(target => {
-            // Calculate XP needed to reach max age
-            const xpNeeded = target.maxXP - target.XP;
-            target.earnXP(xpNeeded);
+            // Calculate TOTAL XP needed from current age to max age
+            let totalXpNeeded = 0;
+            let tempAge = target.age;
+            let tempMaxXP = target.maxXP;
+            
+            // Calculate XP for remaining levels until max age
+            while (tempAge < this.game.config.maxAge) {
+                totalXpNeeded += (tempMaxXP - (tempAge === target.age ? target.XP : 0));
+                tempMaxXP *= (this.game.config.experience ? this.game.config.experience.levelMultiplier : 1.2);
+                tempAge++;
+            }
+            
+            // Give all calculated XP at once
+            target.earnXP(totalXpNeeded);
         });
         
         return { success: true, message: `Maxed age for ${targets.length} player(s)` };
