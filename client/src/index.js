@@ -2479,29 +2479,26 @@ function updateGame() {
         
         mainContext.fillText("=== PLAYER IDS ===", startX, startY);
         
-        // Determine which list to display
-        var displayList;
-        if (playerIDsInfinite) {
-            // Toggle mode: use live players list, filtering out ourselves
-            displayList = players.filter(function(p) {
-                return p && p.sid !== undefined && p.name !== undefined && 
-                       (!player || p.sid !== player.sid);
-            });
-        } else {
-            // Normal mode: use server-provided list
-            displayList = playerIDsToDisplay;
+        // Always scan the live players list to show all current players except self
+        // This ensures new players appear instantly
+        var currentPlayerSID = player ? player.sid : -1;
+        var displayList = [];
+        
+        for (var i = 0; i < players.length; ++i) {
+            var p = players[i];
+            // Include only valid player objects that are not the current player
+            if (p && p.sid !== undefined && p.name !== undefined && 
+                p.isPlayer && p.sid !== currentPlayerSID) {
+                displayList.push(p);
+            }
         }
         
         // Render the display list
-        if (Array.isArray(displayList)) {
-            for (var i = 0; i < displayList.length; ++i) {
-                var p = displayList[i];
-                if (p && p.sid !== undefined && p.name !== undefined) {
-                    var yPos = startY + 25 + (i * lineHeight);
-                    mainContext.fillStyle = "#ffffff";
-                    mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
-                }
-            }
+        for (var i = 0; i < displayList.length; ++i) {
+            var p = displayList[i];
+            var yPos = startY + 25 + (i * lineHeight);
+            mainContext.fillStyle = "#ffffff";
+            mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
         }
         
         mainContext.restore();
