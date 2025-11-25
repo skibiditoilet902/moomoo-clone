@@ -40,13 +40,14 @@ export class Player {
         if (this.customWeaponRange !== undefined && this.customWeaponRange !== null) {
             return this.customWeaponRange;
         }
-        return items.weapons[this.weaponIndex].range;
+        return this.items.weapons[this.weaponIndex].range;
     }
 
     constructor(id, sid, config, UTILS, projectileManager, objectManager, players, ais, items, hats, accessories, socket, scoreCallback, iconCallback) {
         this.socket = socket;
         this.id = id;
         this.sid = sid;
+        this.items = items;
         this.tmpScore = 0;
         this.team = null;
         this.skinIndex = 0;
