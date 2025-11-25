@@ -95,7 +95,7 @@ var animalSpawnPlan = [{
 }, {
     index: 5, desired: 1  // Duck
 }, {
-    index: 11, desired: 3  // Sheep
+    index: 11, desired: 2  // Sheep
 }, {
     index: 2, desired: 1  // Bull
 }, {
