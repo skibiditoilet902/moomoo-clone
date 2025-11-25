@@ -457,9 +457,17 @@ export class AdminCommands {
             return { success: false, message: 'Player not found' };
         }
         
+        if (!Number.isFinite(variant) || variant < 0 || variant > 5) {
+            return { success: false, message: 'Variant must be 0-5 (0=normal, 2=gold, 3=diamond, 4=ruby, 5=emerald)' };
+        }
+        
         targets.forEach(target => {
             target.weaponVariant = variant;
-            this.game.server.broadcast('W', target.sid, variant);
+            for (let i = 0; i < this.game.players.length; ++i) {
+                if (this.game.players[i].sentTo[target.id]) {
+                    this.game.players[i].send('W', target.sid, variant);
+                }
+            }
         });
         
         return { success: true, message: `Set weapon variant to ${variant} for ${targets.length} player(s)` };
@@ -1173,7 +1181,16 @@ export class AdminCommands {
     }
 
     handlePolice(params, player) {
-        const policeHats = [6, 7, 22];
+        // Bumble cap = 18, Snow cap = 19
+        const policeHats = [18, 19];
+        
+        if (player.policeInterval) {
+            clearInterval(player.policeInterval);
+            player.policeInterval = null;
+            player.skinIndex = 0;
+            return { success: true, message: 'Police mode disabled' };
+        }
+        
         let index = 0;
         
         player.policeInterval = setInterval(() => {
@@ -1182,14 +1199,7 @@ export class AdminCommands {
             index++;
         }, 500);
         
-        setTimeout(() => {
-            if (player.policeInterval) {
-                clearInterval(player.policeInterval);
-                player.policeInterval = null;
-            }
-        }, 10000);
-        
-        return { success: true, message: 'Police lights activated' };
+        return { success: true, message: 'Police mode activated - run /police again to disable' };
     }
 
     handleCrash(params, player) {
