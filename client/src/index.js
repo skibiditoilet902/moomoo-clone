@@ -1710,19 +1710,32 @@ function keyDown(event) {
             } else if (keyNum == 88) {
                 sendLockDir();
             } else if (keyNum >= 49 && keyNum <= 57) {
-                // Keys 1-9: Handle items directly in gamemode 1
+                // Keys 1-9: Handle item selection
                 var keyIndex = keyNum - 49; // 0-8
+                console.log(`[DEBUG] Key ${keyNum - 48} pressed (keyIndex=${keyIndex}), gameMode=${player.gameMode}, weapons=${player.weapons?.length}, items=${player.items?.length}`);
+                
                 if (player.gameMode === 1) {
                     // In editor mode, map directly to items: 1=hammer, 2=apple, etc.
                     if (keyIndex < items.list.length) {
+                        console.log(`[DEBUG] Gamemode 1: selecting item ${items.list[keyIndex].id}`);
                         selectToBuild(items.list[keyIndex].id);
                     }
                 } else {
                     // Normal mode: check weapons first, then items
-                    if (player.weapons[keyIndex] != undefined) {
+                    const hasWeapon = player.weapons && player.weapons[keyIndex] != undefined;
+                    const hasItem = player.items && player.items[keyIndex - (player.weapons?.length || 0)] != undefined;
+                    
+                    console.log(`[DEBUG] Normal mode: keyIndex=${keyIndex}, hasWeapon=${hasWeapon}, hasItem=${hasItem}`);
+                    
+                    if (hasWeapon) {
+                        console.log(`[DEBUG] Selecting weapon: ${player.weapons[keyIndex]}`);
                         selectToBuild(player.weapons[keyIndex], true);
-                    } else if (player.items[keyIndex - player.weapons.length] != undefined) {
-                        selectToBuild(player.items[keyIndex - player.weapons.length]);
+                    } else if (hasItem) {
+                        const itemIndex = keyIndex - (player.weapons?.length || 0);
+                        console.log(`[DEBUG] Selecting item at index ${itemIndex}: ${player.items[itemIndex]}`);
+                        selectToBuild(player.items[itemIndex]);
+                    } else {
+                        console.log(`[DEBUG] No weapon or item at keyIndex ${keyIndex}`);
                     }
                 }
             } else if (keyNum == 81) {

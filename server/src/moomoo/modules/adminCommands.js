@@ -276,9 +276,8 @@ export class AdminCommands {
             player.isAdmin = true;
             player.adminLevel = 'full';
             
-            // Force resync of player data by clearing sentTo tracking
-            // This ensures the updated isAdmin flag gets sent to the client
-            player.sentTo = {};
+            // Don't clear sentTo - it causes player state corruption and age reset
+            // Just send the admin login packet
             
             // Send all player info to admin
             const allPlayers = this.game.players
