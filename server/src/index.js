@@ -113,11 +113,6 @@ wss.on("connection", async (socket, req) => {
 
     const player = game.addPlayer(socket);
     player.ipAddress = addr;
-    
-    // Store game reference globally for damage text
-    if (typeof globalThis !== 'undefined') {
-        globalThis.globalGame = game;
-    }
 
     const emit = async (type, ...data) => {
 
@@ -304,10 +299,7 @@ wss.on("connection", async (socket, req) => {
                     }
 
                     if (player.buildIndex === data[0]) {
-                        // Editor mode: don't deselect building
-                        if (player.gameMode !== 1) {
-                            player.buildIndex = -1;
-                        }
+                        player.buildIndex = -1;
                         player.mouseState = 0;
                         break;
                     }
@@ -433,11 +425,8 @@ wss.on("connection", async (socket, req) => {
                     player.upgrAge++;
                     player.upgradePoints--;
 
-                    // Skip item sync if in editor mode (gameMode 1)
-                    if (player.gameMode !== 1) {
-                        player.send("V", player.items, 0);
-                        player.send("V", player.weapons, 1);
-                    }
+                    player.send("V", player.items, 0);
+                    player.send("V", player.weapons, 1);
 
                     if (player.age >= 0) {
                         player.send("U", player.upgradePoints, player.upgrAge);

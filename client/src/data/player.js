@@ -39,8 +39,6 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     this.skinColor = 0;
     this.cps = 0;
     this.ping = -1;
-    this.gameMode = 0;
-    this.hasShield = false;
 
     this.spawn = function (moofoll) {
         this.active = true;
@@ -185,7 +183,6 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
         this.scale = data[8];
         this.skinColor = data[9];
         this.isAdmin = data[10] ? true : false;
-        this.hasShield = data[11] ? true : false;
     };
 
     var timerCount = 0;
@@ -226,14 +223,6 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
             this.slowMult += (config.combat ? config.combat.slowRecoveryRate : 0.0008) * delta;
             if (this.slowMult > 1)
                 this.slowMult = 1;
-        }
-
-        // Editor mode: auto-place items when holding mouse button
-        if (this.gameMode === 1 && this.buildIndex >= 0 && this.mouseState === 1) {
-            var item = items.list[this.buildIndex];
-            if (item) {
-                this.buildItem(item);
-            }
         }
 
         this.noMovTimer += delta;
@@ -438,21 +427,9 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     };
 
     this.buildItem = function (item) {
-        var tmpX, tmpY;
-        
-        // Editor mode: place at cursor position (crosshair)
-        if (this.gameMode === 1) {
-            // Canvas center is where camera is
-            // Mouse position is in screen coordinates
-            tmpX = camX + (mouseX - (screenWidth / 2));
-            tmpY = camY + (mouseY - (screenHeight / 2));
-        } else {
-            // Normal mode: place in front of player
-            var tmpS = (this.scale + item.scale + (item.placeOffset || 0));
-            tmpX = this.x + (tmpS * mathCOS(this.dir));
-            tmpY = this.y + (tmpS * mathSIN(this.dir));
-        }
-        
+        var tmpS = (this.scale + item.scale + (item.placeOffset || 0));
+        var tmpX = this.x + (tmpS * mathCOS(this.dir));
+        var tmpY = this.y + (tmpS * mathSIN(this.dir));
         if (this.canBuild(item) && !(item.consume && (this.skin && this.skin.noEat)) &&
             (item.consume || objectManager.checkItemLocation(tmpX, tmpY, item.scale,
                 0.6, item.id, false, this))) {
@@ -499,19 +476,12 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
             }
             if (worked) {
                 this.useRes(item);
-                // Editor mode: keep building mode active, otherwise deselect
-                if (this.gameMode !== 1) {
-                    this.buildIndex = -1;
-                }
+                this.buildIndex = -1;
             }
         }
     };
 
     this.hasRes = function (item, mult) {
-        // Editor mode has infinite resources
-        if (this.gameMode === 1) {
-            return true;
-        }
         for (var i = 0; i < item.req.length;) {
             if (this[item.req[i]] < Math.round(item.req[i + 1] * (mult || 1)))
                 return false;
@@ -530,10 +500,6 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     };
 
     this.canBuild = function (item) {
-        // Editor mode allows infinite building
-        if (this.gameMode === 1) {
-            return true;
-        }
         if (config.isSandbox) {
             if (item.group) {
                 var count = this.itemCounts[item.group.id] || 0;

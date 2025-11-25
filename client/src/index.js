@@ -1698,10 +1698,7 @@ function keyDown(event) {
     } else if (player && player.alive && keysActive()) {
         if (!keys[keyNum]) {
             keys[keyNum] = 1;
-            // Check movement keys FIRST - they have priority over item selection
-            if (moveKeys[keyNum]) {
-                sendMoveDir();
-            } else if (keyNum == 69) {
+            if (keyNum == 69) {
                 sendAutoGather();
             } else if (keyNum == 67) {
                 updateMapMarker();
@@ -1715,6 +1712,8 @@ function keyDown(event) {
                 selectToBuild(player.items[0]);
             } else if (keyNum == 82) {
                 sendMapPing();
+            } else if (moveKeys[keyNum]) {
+                sendMoveDir();
             } else if (keyNum == 32) {
                 attackState = 1;
                 sendAtckState();
@@ -1823,10 +1822,7 @@ function setupGame(yourSID) {
 }
 
 function showText(x, y, value, type) {
-    // type 1 = shielded/invincible, type 0 = normal damage
-    var displayText = (type === 1) ? "invincible" : Math.abs(value);
-    var textColor = (type === 1) ? "#fff" : ((value >= 0) ? "#fff" : "#8ecc51");
-    textManager.showText(x, y, 50, 0.18, 500, displayText, textColor);
+    textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), (value >= 0) ? "#fff" : "#8ecc51");
 }
 
 function adminLoginShowPlayers(allPlayers) {
@@ -2012,17 +2008,13 @@ function updateStatusDisplay() {
 }
 
 var iconSprites = {};
-var icons = ["crown", "skull", "shield"];
+var icons = ["crown", "skull"];
 
 function loadIcons() {
     for (var i = 0; i < icons.length; ++i) {
         var tmpSprite = new Image();
         tmpSprite.onload = function () {
             this.isLoaded = true;
-            console.log("Icon loaded:", this.src);
-        };
-        tmpSprite.onerror = function() {
-            console.error("Failed to load icon:", this.src);
         };
         tmpSprite.src = ".././img/icons/" + icons[i] + ".png";
         iconSprites[icons[i]] = tmpSprite;
@@ -2388,34 +2380,11 @@ function updateGame() {
                             mainContext.fillStyle = "#ff0000";
                             mainContext.fillText(idText, tmpObj.x - xOffset, idY);
                         }
-                        // Shield and crown icon positioning with proper spacing
-                        var tmpS = config.crownIconScale;
-                        var iconY = (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5;
-                        
-                        // Shield icon if player has shield
-                        if (tmpObj.hasShield) {
-                            var shieldX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad - (tmpObj.isLeader ? tmpS + 5 : 0);
-                            
-                            if (iconSprites["shield"] && iconSprites["shield"].isLoaded) {
-                                try {
-                                    mainContext.drawImage(iconSprites["shield"], shieldX, iconY, tmpS, tmpS);
-                                } catch(e) {
-                                    console.error("Failed to draw shield:", e);
-                                    mainContext.fillStyle = "#4f9fff";
-                                    mainContext.beginPath();
-                                    mainContext.arc(shieldX + tmpS/2, iconY + tmpS/2, tmpS/2, 0, Math.PI * 2);
-                                    mainContext.fill();
-                                }
-                            } else {
-                                mainContext.fillStyle = "#4f9fff";
-                                mainContext.beginPath();
-                                mainContext.arc(shieldX + tmpS/2, iconY + tmpS/2, tmpS/2, 0, Math.PI * 2);
-                                mainContext.fill();
-                            }
-                        }
                         if (tmpObj.isLeader && iconSprites["crown"].isLoaded) {
-                            var crownX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
-                            mainContext.drawImage(iconSprites["crown"], crownX, iconY, tmpS, tmpS);
+                            var tmpS = config.crownIconScale;
+                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
+                            mainContext.drawImage(iconSprites["crown"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) -
+                                config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
                         }
                         if (tmpObj.iconIndex == 1 && iconSprites["skull"].isLoaded) {
                             var tmpS = config.crownIconScale;
@@ -3417,7 +3386,7 @@ function updatePlayers(data) {
             tmpObj.weaponIndex = data[i + 5];
             tmpObj.weaponVariant = data[i + 6];
             tmpObj.team = data[i + 7];
-            tmpObj.isLeader = data[i + 8] ? true : false;
+            tmpObj.isLeader = data[i + 8];
             tmpObj.skinIndex = data[i + 9];
             tmpObj.tailIndex = data[i + 10];
             tmpObj.iconIndex = data[i + 11];
@@ -3425,10 +3394,9 @@ function updatePlayers(data) {
             tmpObj.cps = typeof data[i + 13] === "number" ? Math.max(0, Math.round(data[i + 13])) : 0;
             tmpObj.ping = typeof data[i + 14] === "number" ? Math.max(-1, Math.round(data[i + 14])) : -1;
             tmpObj.isAdmin = data[i + 15] ? true : false;
-            tmpObj.hasShield = data[i + 16] ? true : false;
             tmpObj.visible = true;
         }
-        i += 17;
+        i += 16;
     }
 }
 

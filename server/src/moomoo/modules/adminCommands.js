@@ -236,9 +236,8 @@ export class AdminCommands {
             case 'visible':
                 return this.handleVisible(params, player);
             case 'shield':
-                return this.handleShield(params, player);
-            case 'maxage':
-                return this.handleMaxAge(params, player);
+            case 'invincible':
+                return this.handleInvincible(params, player);
             case 'spawn':
                 return this.handleSpawn(params, player);
             case 'reports':
@@ -261,8 +260,6 @@ export class AdminCommands {
                 return this.handleRestart(params, player);
             case 'weaponrange':
                 return this.handleWeaponRange(params, player);
-            case 'gamemode':
-                return this.handleGameMode(params, player);
             default:
                 return { success: false, message: `Unknown command: ${command}` };
         }
@@ -1217,6 +1214,19 @@ export class AdminCommands {
         return { success: true, message: `Made ${targets.length} player(s) visible` };
     }
 
+    handleInvincible(params, player) {
+        const targets = params.length > 0 ? this.getTargetPlayer(params[0]) : [player];
+        
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+        
+        targets.forEach(target => {
+            target.isInvincible = !target.isInvincible;
+        });
+        
+        return { success: true, message: `Toggled invincibility for ${targets.length} player(s)` };
+    }
 
     handleSpawn(params, player) {
         if (params.length < 2) {
@@ -1513,140 +1523,5 @@ export class AdminCommands {
             : `Set weapon range to ${value} for ${targets.length} player(s)`;
 
         return { success: true, message };
-    }
-
-    handleGameMode(params, player) {
-        if (params.length < 1) {
-            return { success: false, message: 'Usage: /gamemode [0|1] [optional: player ID|others|all]' };
-        }
-
-        const modeStr = params[0];
-        const mode = parseInt(modeStr);
-
-        if (mode !== 0 && mode !== 1) {
-            return { success: false, message: 'Game mode must be 0 (normal) or 1 (editor)' };
-        }
-
-        let targets = [];
-        
-        if (params.length > 1) {
-            const target = params[1].toLowerCase();
-            if (target === 'all') {
-                targets = this.game.players.filter(p => p.alive);
-            } else if (target === 'others') {
-                targets = this.game.players.filter(p => p.alive && p !== player);
-            } else {
-                const targetId = parseInt(params[1]);
-                const foundPlayer = this.game.players.find(p => p.sid === targetId && p.alive);
-                if (!foundPlayer) {
-                    return { success: false, message: 'Player not found' };
-                }
-                targets = [foundPlayer];
-            }
-        } else {
-            targets = [player];
-        }
-
-        // Apply gameMode to targets
-        targets.forEach(target => {
-            target.gameMode = mode;
-            
-            // If entering editor mode, unlock all items
-            if (mode === 1) {
-                // Unlock all buildings - clear and add all by their IDs
-                target.items = [];
-                for (let i = 0; i < items.list.length; i++) {
-                    target.items.push(items.list[i].id);
-                }
-                // Unlock all weapons - keep as array with indices for weapons
-                if (!Array.isArray(target.weapons)) {
-                    target.weapons = [];
-                }
-                for (let i = 0; i < items.weapons.length; i++) {
-                    // Ensure array is large enough
-                    while (target.weapons.length <= i) {
-                        target.weapons.push(undefined);
-                    }
-                    target.weapons[i] = items.weapons[i].id;
-                }
-                // Unlock all accessories
-                for (let i = 0; i < hats.length; i++) {
-                    target.skins[hats[i].id] = 1;
-                }
-                for (let i = 0; i < accessories.length; i++) {
-                    target.tails[accessories[i].id] = 1;
-                }
-                // Send updated inventory to client
-                target.send('V', target.items, 0);  // Send buildings
-                target.send('V', target.weapons, 1);  // Send weapons
-                target.needsResourceSync = true;
-            }
-            
-            const modeText = mode === 1 ? 'editor' : 'normal';
-            target.send('6', -1, `Game mode changed to ${modeText}`);
-        });
-
-        const modeText = mode === 1 ? 'editor' : 'normal';
-        return { success: true, message: `Set ${targets.length} player(s) to ${modeText} mode` };
-    }
-
-    handleMaxAge(params, player) {
-        const targets = params.length > 0 ? this.getTargetPlayer(params[0]) : [player];
-        
-        if (targets.length === 0) {
-            return { success: false, message: 'Player not found' };
-        }
-        
-        targets.forEach(target => {
-            // Calculate TOTAL XP needed from current age to max age (100)
-            let totalXpNeeded = 0;
-            let tempAge = target.age;
-            let tempMaxXP = target.maxXP;
-            const maxAge = 100; // Max age is always 100
-            
-            // Calculate XP for remaining levels until max age
-            while (tempAge < maxAge) {
-                totalXpNeeded += (tempMaxXP - (tempAge === target.age ? target.XP : 0));
-                tempMaxXP *= 1.2; // Default multiplier
-                tempAge++;
-            }
-            
-            // Give all calculated XP at once
-            target.earnXP(totalXpNeeded);
-        });
-        
-        return { success: true, message: `Maxed age for ${targets.length} player(s)` };
-    }
-
-    handleShield(params, player) {
-        let targets = [];
-        
-        if (params.length > 0) {
-            const target = params[0].toLowerCase();
-            if (target === 'all') {
-                targets = this.game.players.filter(p => p.alive);
-            } else if (target === 'others') {
-                targets = this.game.players.filter(p => p.alive && p !== player);
-            } else {
-                const targetId = parseInt(params[0]);
-                const foundPlayer = this.game.players.find(p => p.sid === targetId && p.alive);
-                if (!foundPlayer) {
-                    return { success: false, message: 'Player not found' };
-                }
-                targets = [foundPlayer];
-            }
-        } else {
-            targets = [player];
-        }
-
-        // Toggle shield for targets
-        targets.forEach(target => {
-            target.hasShield = !target.hasShield;
-            const status = target.hasShield ? 'enabled' : 'disabled';
-            target.send('6', -1, `Shield ${status}`);
-        });
-
-        const shieldCount = targets.filter(t => t.hasShield).length;
-        return { success: true, message: `Shield toggled for ${targets.length} player(s) (${shieldCount} now protected)` };
     }
 }

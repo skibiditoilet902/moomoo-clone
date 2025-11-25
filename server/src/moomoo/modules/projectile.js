@@ -50,10 +50,6 @@ export class Projectile {
                     for (var i = 0; i < players.length + ais.length; ++i) {
                         tmpObj = players[i] || ais[i - players.length];
                         if (tmpObj.alive && tmpObj != this.owner && !(this.owner.team && tmpObj.team == this.owner.team)) {
-                            // Editor mode players can't hit AI
-                            if (this.owner.gameMode === 1 && tmpObj.isAI) {
-                                continue;
-                            }
                             if (UTILS.lineInRect(tmpObj.x - tmpObj.scale, tmpObj.y - tmpObj.scale, tmpObj.x + tmpObj.scale, tmpObj.y + tmpObj.scale, this.x, this.y, this.x + tmpSpeed * Math.cos(this.dir), this.y + tmpSpeed * Math.sin(this.dir))) {
                                 objectsHit.push(tmpObj);
                             }
