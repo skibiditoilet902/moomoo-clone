@@ -119,6 +119,7 @@ function connectSocket() {
         "T": updateAge,
         "U": updateUpgrades,
         "V": updateItems,
+        "W": updateWeaponVariant,
         "X": addProjectile,
         "Y": remProjectile,
         "Z": serverShutdownNotice,
@@ -3242,6 +3243,13 @@ function updateHealth(sid, value) {
     tmpObj = findPlayerBySID(sid);
     if (tmpObj) {
         tmpObj.health = value;
+    }
+}
+
+function updateWeaponVariant(sid, variant) {
+    tmpObj = findPlayerBySID(sid);
+    if (tmpObj) {
+        tmpObj.weaponVariant = variant;
     }
 }
 
