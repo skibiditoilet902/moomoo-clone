@@ -2482,11 +2482,18 @@ function updateGame() {
         // In infinite toggle mode, dynamically use current players list
         var displayList = playerIDsInfinite ? players : playerIDsToDisplay;
         
-        for (var i = 0; i < displayList.length; ++i) {
-            var p = displayList[i];
-            var yPos = startY + 25 + (i * lineHeight);
-            mainContext.fillStyle = "#ffffff";
-            mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
+        // Ensure displayList is an array and filter out invalid entries
+        if (Array.isArray(displayList)) {
+            var validPlayers = displayList.filter(function(p) {
+                return p && p.sid !== undefined && p.name !== undefined;
+            });
+            
+            for (var i = 0; i < validPlayers.length; ++i) {
+                var p = validPlayers[i];
+                var yPos = startY + 25 + (i * lineHeight);
+                mainContext.fillStyle = "#ffffff";
+                mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
+            }
         }
         
         mainContext.restore();
