@@ -676,6 +676,31 @@ export class Player {
             var tmpS = this.scale + item.scale + (item.placeOffset || 0);
             var tmpX = this.x + tmpS * mathCOS(this.dir);
             var tmpY = this.y + tmpS * mathSIN(this.dir);
+            
+            // Editor mode: different behavior
+            if (this.gameMode === 1) {
+                if (this.canBuild(item)) {
+                    if (!item.consume) {
+                        // Place item without consuming resources
+                        if (item.group && item.group.limit) {
+                            this.changeItemCount(item.group.id, 1);
+                        }
+                        var placedItem = item;
+                        if (item.pps) {
+                            var sandboxMultiplier = config.isSandbox ? (config.millPpsMultiplier || 1) : 1;
+                            var ppsToAdd = item.pps * sandboxMultiplier;
+                            this.pps += ppsToAdd;
+                            placedItem = Object.assign({}, item, {
+                                pps: ppsToAdd
+                            });
+                        }
+                        objectManager.add(objectManager.objects.length, tmpX, tmpY, this.dir, item.scale, item.type, placedItem, false, this);
+                        // KEEP buildIndex selected - don't reset to -1
+                    }
+                }
+                return;
+            }
+            
             if (this.canBuild(item) && !(item.consume && this.skin && this.skin.noEat) && (item.consume || objectManager.checkItemLocation(tmpX, tmpY, item.scale, 0.6, item.id, false, this))) {
                 var worked = false;
                 if (item.consume) {
@@ -745,6 +770,11 @@ export class Player {
 
         // CAN BUILD:
         this.canBuild = function(item) {
+            // Editor mode: no restrictions
+            if (this.gameMode === 1) {
+                return true;
+            }
+            
             if (config.isSandbox) {
                 if (item.group) {
                     var count = this.itemCounts[item.group.id] || 0;
