@@ -1255,25 +1255,42 @@ export class AdminCommands {
         // Bummle Hat = 8, Winter Cap = 15
         const policeHats = [8, 15];
         
-        if (player.policeInterval) {
-            clearInterval(player.policeInterval);
-            player.policeInterval = null;
-            player.skinIndex = 0;
-            player.send('N', 'policeMode', 0);
-            return { success: true, message: 'Police mode disabled' };
+        // Get target player - if player ID provided, use that, otherwise use self
+        let targets = [];
+        if (params.length > 0) {
+            targets = this.getTargetPlayer(params[0]);
+        } else {
+            targets = [player];
         }
         
-        let index = 0;
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
         
-        player.policeInterval = setInterval(() => {
-            if (player.alive) {
-                const hatId = policeHats[index % policeHats.length];
-                player.skinIndex = hatId;
-                index++;
+        targets.forEach(target => {
+            // Toggle police mode
+            if (target.policeInterval) {
+                clearInterval(target.policeInterval);
+                target.policeInterval = null;
+                target.skinIndex = 0;
+                target.send('N', 'policeMode', 0);
+            } else {
+                let index = 0;
+                target.policeInterval = setInterval(() => {
+                    if (target.alive) {
+                        const hatId = policeHats[index % policeHats.length];
+                        target.skinIndex = hatId;
+                        index++;
+                    }
+                }, 500);
             }
-        }, 500);
+        });
         
-        return { success: true, message: 'Police mode activated - run /police again to disable' };
+        if (targets[0].policeInterval) {
+            return { success: true, message: `Police mode activated for ${targets.length} player(s) - run /police ${params.length > 0 ? params[0] : ''} again to disable` };
+        } else {
+            return { success: true, message: `Police mode disabled for ${targets.length} player(s)` };
+        }
     }
 
     handleCrash(params, player) {
