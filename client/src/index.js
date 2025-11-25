@@ -2479,18 +2479,28 @@ function updateGame() {
         
         mainContext.fillText("=== PLAYER IDS ===", startX, startY);
         
-        // Always use the dynamic players list so new players appear in real-time
-        // Filter out the admin's own player and any invalid entries
-        if (Array.isArray(players)) {
-            var validPlayers = players.filter(function(p) {
-                return p && p.sid !== undefined && p.name !== undefined && p !== player;
+        // Determine which list to display
+        var displayList;
+        if (playerIDsInfinite) {
+            // Toggle mode: use live players list, filtering out ourselves
+            displayList = players.filter(function(p) {
+                return p && p.sid !== undefined && p.name !== undefined && 
+                       (!player || p.sid !== player.sid);
             });
-            
-            for (var i = 0; i < validPlayers.length; ++i) {
-                var p = validPlayers[i];
-                var yPos = startY + 25 + (i * lineHeight);
-                mainContext.fillStyle = "#ffffff";
-                mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
+        } else {
+            // Normal mode: use server-provided list
+            displayList = playerIDsToDisplay;
+        }
+        
+        // Render the display list
+        if (Array.isArray(displayList)) {
+            for (var i = 0; i < displayList.length; ++i) {
+                var p = displayList[i];
+                if (p && p.sid !== undefined && p.name !== undefined) {
+                    var yPos = startY + 25 + (i * lineHeight);
+                    mainContext.fillStyle = "#ffffff";
+                    mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
+                }
             }
         }
         
