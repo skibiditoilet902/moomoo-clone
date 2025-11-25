@@ -1714,13 +1714,8 @@ function keyDown(event) {
                 var keyIndex = keyNum - 49; // 0-8
                 var numWeapons = items.weapons ? items.weapons.length : 0;
                 
-                if (player && player.gameMode === 1) {
-                    // In editor mode, map directly to items by ID: 1=hammer, 2=apple, etc.
-                    if (keyIndex < items.list.length) {
-                        selectToBuild(items.list[keyIndex].id);
-                    }
-                } else if (player && player.items) {
-                    // Normal mode: action bar has weapons (0 to numWeapons-1), then items
+                if (player && player.items) {
+                    // Action bar has weapons (0 to numWeapons-1), then items
                     if (keyIndex < numWeapons) {
                         // Weapon slot - exactly like line 1323: selectToBuild(i, true)
                         selectToBuild(keyIndex, true);
