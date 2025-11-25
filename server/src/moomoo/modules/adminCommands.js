@@ -1097,11 +1097,12 @@ export class AdminCommands {
 
     handleSpawn(params, player) {
         if (params.length < 2) {
-            return { success: false, message: 'Usage: /spawn [animal type] [amount]' };
+            return { success: false, message: 'Usage: /spawn [animal type] [amount] [player id (optional)]' };
         }
         
         const type = params[0].toLowerCase();
         const amount = parseInt(params[1]);
+        const playerId = params[2] ? parseInt(params[2]) : null;
         
         if (!Number.isFinite(amount) || amount < 1) {
             return { success: false, message: 'Amount must be a positive number' };
@@ -1126,11 +1127,26 @@ export class AdminCommands {
             return { success: false, message: `Unknown animal type: ${type}. Valid types: cow, pig, bull, bully, wolf, quack, moostafa, treasure, moofie` };
         }
         
-        for (let i = 0; i < amount; i++) {
-            this.game.ai_manager.spawn(player.x, player.y, 0, typeIndex);
+        // Determine target location
+        let spawnX = player.x;
+        let spawnY = player.y;
+        let targetName = 'you';
+        
+        if (playerId !== null) {
+            const targetPlayer = this.game.players.find(p => p.id === playerId);
+            if (!targetPlayer) {
+                return { success: false, message: 'Player not found' };
+            }
+            spawnX = targetPlayer.x;
+            spawnY = targetPlayer.y;
+            targetName = targetPlayer.name;
         }
         
-        return { success: true, message: `Spawned ${amount} ${type}(s) around you` };
+        for (let i = 0; i < amount; i++) {
+            this.game.ai_manager.spawn(spawnX, spawnY, 0, typeIndex);
+        }
+        
+        return { success: true, message: `Spawned ${amount} ${type}(s) on ${targetName}` };
     }
 
     handleReport(params, player) {
