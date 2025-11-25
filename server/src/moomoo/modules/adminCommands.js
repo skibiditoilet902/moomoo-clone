@@ -1550,7 +1550,6 @@ export class AdminCommands {
         // Apply gameMode to targets
         targets.forEach(target => {
             target.gameMode = mode;
-            target.sentTo = {}; // Force resync to client
             
             // If entering editor mode, unlock all items
             if (mode === 1) {

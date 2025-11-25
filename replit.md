@@ -94,11 +94,11 @@ The game server serves both the static client assets and WebSocket connections o
 - **Implementation**: Calculates remaining XP needed (`target.maxXP - target.XP`) and calls `earnXP()` to advance levels
 - **Multiple Players**: Supports `/maxage all` to max age for all players
 
-### 4. ✅ Shield Toggle Rendering Fix
-- **Problem**: When toggling shield OFF with `/shield` again, icon would render incorrectly on other players' screens
-- **Root Cause**: `target.sentTo = {}` was clearing visibility tracking and breaking player data sync
-- **Solution**: Removed the sentTo reset - normal game loop handles player state updates
-- **Result**: Shield can be toggled on/off without rendering glitches
+### 4. ✅ Shield & Gamemode State Reset Bug (CRITICAL FIX)
+- **Problem**: `/shield` and `/gamemode 1` commands were resetting age to 1 and changing weapon to hammer
+- **Root Cause**: Both commands were calling `target.sentTo = {}` which cleared visibility tracking and broke player state sync
+- **Solution**: Removed `target.sentTo = {}` from BOTH handleShield and handleGameMode functions
+- **Result**: Commands now execute without corrupting player state - age and weapon stay intact
 
 ### Known Issues Being Investigated
 - **Gamemode 1 Items Disappearing**: Items appear briefly when placed in editor mode, then vanish in next object sync
