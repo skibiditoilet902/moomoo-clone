@@ -81,11 +81,12 @@ The game server serves both the static client assets and WebSocket connections o
 - **Icon Rendering**: Shield icon displays properly with fallback circles if sprite fails to load
 
 ### 2. ✅ Icon Positioning Fix (Shield + Crown)
-- **Problem**: When player created tribe, shield and crown icons overlapped on top of each other
-- **Solution**: Added conditional positioning in `client/src/index.js` (lines 2393-2423):
-  - Shield icon positioned further left (offset by `-tmpS - 5`) when player has crown
-  - Icons now display side-by-side instead of overlapping
-  - Proper spacing prevents visual clutter when player has multiple icons
+- **Problem**: When player created tribe, shield and crown icons overlapped or rendered incorrectly
+- **Solution**: Fixed in `client/src/index.js` (lines 2393-2421):
+  - Crown uses original positioning calculation (independent crownX)
+  - Shield calculates conditional offset: `-tmpS - 5` when player has crown, else normal position
+  - Restored separate coordinate calculations to prevent rendering conflicts
+  - Icons now display properly side-by-side with correct spacing
 
 ### 3. ✅ /maxage Command
 - **Functionality**: Instantly gives player all XP needed to reach maximum age
