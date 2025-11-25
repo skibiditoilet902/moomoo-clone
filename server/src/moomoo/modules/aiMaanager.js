@@ -192,6 +192,16 @@ export class AiManager {
             hitDelay: 1000,
             chargePlayer: true,
             drop: ["food", 100, "gold", 10000]
+        }, {
+            id: 11,
+            src: "sheep_1",
+            killScore: 200,
+            health: 800,
+            weightM: 0.6,
+            speed: 0.001315,
+            turnSpeed: 0.001,
+            scale: 72,
+            drop: ["food", 100, "gold", 400]
         }];
 
         // SPAWN AI:

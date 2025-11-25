@@ -310,6 +310,9 @@ export class Game {
             index: 5,
             desired: 6
         }, {
+            index: 11,
+            desired: 8
+        }, {
             index: 2,
             desired: 8
         }, {
