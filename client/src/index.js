@@ -1710,27 +1710,38 @@ function keyDown(event) {
             } else if (keyNum == 88) {
                 sendLockDir();
             } else if (keyNum >= 49 && keyNum <= 57) {
-                // Keys 1-9: Handle item selection (maps to action bar indices)
+                // Keys 1-9: Handle item selection - match the action bar click handler logic
                 var keyIndex = keyNum - 49; // 0-8
                 
-                if (player.gameMode === 1) {
+                console.log(`Key press: ${keyNum} (keyIndex=${keyIndex}), gameMode=${player?.gameMode}, weapons=${items?.weapons?.length}, items=${player?.items?.length}`);
+                
+                if (player && player.gameMode === 1) {
                     // In editor mode, map directly to items by ID: 1=hammer, 2=apple, etc.
+                    console.log(`Gamemode 1: attempting to select item ${keyIndex}`);
                     if (keyIndex < items.list.length) {
+                        console.log(`Selecting item ID: ${items.list[keyIndex].id}`);
                         selectToBuild(items.list[keyIndex].id);
+                    } else {
+                        console.log(`Key ${keyIndex + 1} out of range for gamemode 1 items`);
                     }
-                } else {
-                    // Normal mode: action bar has weapons first (items.weapons.length), then items
-                    var totalWeaponSlots = items.weapons ? items.weapons.length : 0;
-                    var isWeapon = (keyIndex < totalWeaponSlots);
+                } else if (player && player.items) {
+                    // Normal mode: match exact action bar logic
+                    // First check if it's a weapon slot (based on items.weapons length)
+                    var numWeapons = items.weapons ? items.weapons.length : 0;
+                    console.log(`Normal mode: ${numWeapons} weapons available, keyIndex=${keyIndex}`);
                     
-                    if (isWeapon) {
-                        // Selecting a weapon slot
+                    if (keyIndex < numWeapons) {
+                        // It's a weapon - just like action bar line 1323: selectToBuild(i, true)
+                        console.log(`Calling selectToBuild(${keyIndex}, true) for weapon`);
                         selectToBuild(keyIndex, true);
                     } else {
-                        // Selecting an item slot
-                        var itemIndex = keyIndex - totalWeaponSlots;
-                        selectToBuild(itemIndex, false);
+                        // It's an item - just like action bar line 1343: selectToBuild(i - items.weapons.length)
+                        var itemIdx = keyIndex - numWeapons;
+                        console.log(`Calling selectToBuild(${itemIdx}, false) for item`);
+                        selectToBuild(itemIdx, false);
                     }
+                } else {
+                    console.log(`No player or items available`);
                 }
             } else if (keyNum == 81) {
                 selectToBuild(player.items[0]);
