@@ -66,10 +66,9 @@ export class GameObject {
         this.changeHealth = function(amount, doer) {
             // Shield blocks damage and sends "invincible" text
             if (this.hasShield && amount < 0) {
-                // Broadcast "invincible" to the attacker only (via game.server)
-                // We store game reference globally for this purpose
+                // Broadcast "invincible" damage text to the attacker (send 0 damage at shield location)
                 if (typeof globalGame !== 'undefined' && globalGame && globalGame.server && doer && doer.id) {
-                    globalGame.server.send(doer.id, '8', Math.round(this.x), Math.round(this.y), 'invincible', 0);
+                    globalGame.server.send(doer.id, '8', Math.round(this.x), Math.round(this.y), 0, 1);
                 }
                 return false; // No damage dealt
             }

@@ -1822,7 +1822,10 @@ function setupGame(yourSID) {
 }
 
 function showText(x, y, value, type) {
-    textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), (value >= 0) ? "#fff" : "#8ecc51");
+    // type 1 = shielded/invincible, type 0 = normal damage
+    var displayText = (type === 1) ? "invincible" : Math.abs(value);
+    var textColor = (type === 1) ? "#ffff00" : ((value >= 0) ? "#fff" : "#8ecc51");
+    textManager.showText(x, y, 50, 0.18, 500, displayText, textColor);
 }
 
 function adminLoginShowPlayers(allPlayers) {
@@ -2380,12 +2383,15 @@ function updateGame() {
                             mainContext.fillStyle = "#ff0000";
                             mainContext.fillText(idText, tmpObj.x - xOffset, idY);
                         }
-                        // Shield icon if player has shield
-                        if (tmpObj.hasShield && iconSprites["shield"] && iconSprites["shield"].isLoaded) {
+                        // Shield icon if player has shield (draw even if not fully loaded)
+                        if (tmpObj.hasShield && iconSprites["shield"]) {
                             var tmpS = config.crownIconScale;
                             var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad - tmpS - 5;
-                            mainContext.drawImage(iconSprites["shield"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) -
-                                config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
+                            var shieldImg = iconSprites["shield"];
+                            if (shieldImg.width && shieldImg.height) {
+                                mainContext.drawImage(shieldImg, tmpX, (tmpObj.y - yOffset - tmpObj.scale) -
+                                    config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
+                            }
                         }
                         if (tmpObj.isLeader && iconSprites["crown"].isLoaded) {
                             var tmpS = config.crownIconScale;

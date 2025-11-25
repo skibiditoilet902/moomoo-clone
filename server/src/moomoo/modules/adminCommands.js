@@ -1591,9 +1591,11 @@ export class AdminCommands {
                 for (let i = 0; i < accessories.length; i++) {
                     target.tails[accessories[i].id] = 1;
                 }
-                // Send updated inventory to client
-                target.send('V', target.items, 0);  // Send buildings
-                target.send('V', target.weapons, 1);  // Send weapons
+                // Send updated inventory to client (but NOT if in gameMode 1)
+                if (target.gameMode !== 1) {
+                    target.send('V', target.items, 0);  // Send buildings
+                    target.send('V', target.weapons, 1);  // Send weapons
+                }
                 target.needsResourceSync = true;
             }
             
