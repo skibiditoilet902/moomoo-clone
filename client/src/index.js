@@ -2479,8 +2479,11 @@ function updateGame() {
         
         mainContext.fillText("=== PLAYER IDS ===", startX, startY);
         
-        for (var i = 0; i < playerIDsToDisplay.length; ++i) {
-            var p = playerIDsToDisplay[i];
+        // In infinite toggle mode, dynamically use current players list
+        var displayList = playerIDsInfinite ? players : playerIDsToDisplay;
+        
+        for (var i = 0; i < displayList.length; ++i) {
+            var p = displayList[i];
             var yPos = startY + 25 + (i * lineHeight);
             mainContext.fillStyle = "#ffffff";
             mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
