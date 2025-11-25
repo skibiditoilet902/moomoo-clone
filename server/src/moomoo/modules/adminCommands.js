@@ -518,19 +518,31 @@ export class AdminCommands {
         return { success: true, message: `Set ${attribute} to ${value} for ${targets.length} player(s)` };
     }
 
+    findWeaponByName(weaponName) {
+        const name = weaponName.toLowerCase();
+        return items.weapons.find(w => w.name && w.name.toLowerCase() === name);
+    }
+
     handleWeaponGive(params, player) {
-        if (params.length < 2) {
-            return { success: false, message: 'Usage: /weapongive [weapon ID 0-15] [player ID|all|others]' };
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /weapongive [weapon name] [player ID|all|others] (default: self)' };
         }
         
-        const weaponId = parseInt(params[0]);
-        const targetId = params[1];
-        const targets = this.getTargetPlayer(targetId, player);
+        const weaponName = params[0];
+        const weapon = this.findWeaponByName(weaponName);
         
-        console.log(`[Admin] weapongive: weaponId=${weaponId}, targetId=${targetId}, targets.length=${targets.length}`);
+        if (!weapon) {
+            return { success: false, message: `Weapon "${weaponName}" not found` };
+        }
         
-        if (isNaN(weaponId) || weaponId < 0 || weaponId > 15) {
-            return { success: false, message: 'Invalid weapon ID (must be 0-15)' };
+        // Default to self if no target specified
+        const targetId = params.length > 1 ? params[1] : 'self';
+        let targets = [];
+        
+        if (targetId === 'self') {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(targetId, player);
         }
         
         if (targets.length === 0) {
@@ -540,45 +552,50 @@ export class AdminCommands {
         let addedCount = 0;
         targets.forEach(target => {
             if (!Array.isArray(target.weapons)) {
-                console.log(`[Admin] WARNING: target.weapons is not an array: ${typeof target.weapons}`);
-                target.weapons = [0]; // Initialize if missing
+                target.weapons = [0];
             }
             
-            console.log(`[Admin] Before: target (${target.sid}) weapons = ${JSON.stringify(target.weapons)}`);
-            
-            // Add weapon to inventory if not already there
-            if (!target.weapons.includes(weaponId)) {
-                target.weapons.push(weaponId);
+            if (!target.weapons.includes(weapon.id)) {
+                target.weapons.push(weapon.id);
                 addedCount++;
             }
-            
-            console.log(`[Admin] After: target (${target.sid}) weapons = ${JSON.stringify(target.weapons)}`);
         });
         
-        return { success: true, message: `Gave weapon ${weaponId} to ${addedCount}/${targets.length} player(s)` };
+        return { success: true, message: `Gave ${weapon.name} to ${addedCount}/${targets.length} player(s)` };
     }
 
     handleWeaponRemove(params, player) {
-        if (params.length < 2) {
-            return { success: false, message: 'Usage: /weaponremove [weapon ID 0-15] [player ID|all|others]' };
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /weaponremove [weapon name] [player ID|all|others] (default: self)' };
         }
         
-        const weaponId = parseInt(params[0]);
-        const targets = this.getTargetPlayer(params[1], player);
+        const weaponName = params[0];
+        const weapon = this.findWeaponByName(weaponName);
         
-        if (isNaN(weaponId) || weaponId < 0 || weaponId > 15) {
-            return { success: false, message: 'Invalid weapon ID (must be 0-15)' };
+        if (!weapon) {
+            return { success: false, message: `Weapon "${weaponName}" not found` };
+        }
+        
+        // Default to self if no target specified
+        const targetId = params.length > 1 ? params[1] : 'self';
+        let targets = [];
+        
+        if (targetId === 'self') {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(targetId, player);
         }
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
         }
         
+        let removedCount = 0;
         targets.forEach(target => {
-            // Remove weapon from inventory
-            const index = target.weapons.indexOf(weaponId);
+            const index = target.weapons.indexOf(weapon.id);
             if (index > -1) {
                 target.weapons.splice(index, 1);
+                removedCount++;
                 // If the removed weapon was selected, switch to first weapon
                 if (target.weaponIndex === index && target.weapons.length > 0) {
                     target.weaponIndex = 0;
@@ -586,7 +603,7 @@ export class AdminCommands {
             }
         });
         
-        return { success: true, message: `Removed weapon ${weaponId} from ${targets.length} player(s)` };
+        return { success: true, message: `Removed ${weapon.name} from ${removedCount}/${targets.length} player(s)` };
     }
 
     handleSetWeaponSpeed(params, player) {
