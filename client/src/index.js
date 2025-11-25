@@ -122,6 +122,7 @@ function connectSocket() {
         "X": addProjectile,
         "Y": remProjectile,
         "Z": serverShutdownNotice,
+        "EX": explosionEffect,
         "g": addAlliance,
         "1": deleteAlliance,
         "2": allianceNotification,
@@ -1857,6 +1858,26 @@ function killPlayer() {
         } catch (e) { }
     } catch (e) {
         console.error("Error in killPlayer:", e);
+    }
+}
+
+function explosionEffect(sid, x, y) {
+    try {
+        // Create explosion particles at the location
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 * i) / 8;
+            const speed = 0.15 + Math.random() * 0.1;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            
+            // Show floating text at explosion location
+            textManager.showText(x, y, 50, 0.15, 400, "BOOM!", "#ff6b35");
+        }
+        
+        // Optional: Play sound effect (if implemented)
+        // if (config.soundEffects) { playSound('explosion'); }
+    } catch (e) {
+        console.error("Error in explosionEffect:", e);
     }
 }
 

@@ -966,18 +966,27 @@ export class AdminCommands {
     }
 
     handleExplode(params, player) {
+        let targets = [];
+        
+        // No player ID means explode yourself
         if (params.length < 1) {
-            return { success: false, message: 'Usage: /explode [player ID]' };
-        }
-        
-        const targets = this.getTargetPlayer(params[0]);
-        
-        if (targets.length === 0) {
-            return { success: false, message: 'Player not found' };
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0]);
+            
+            if (targets.length === 0) {
+                return { success: false, message: 'Player not found' };
+            }
         }
         
         targets.forEach(target => {
-            this.game.server.broadcast('EX', target.sid, target.x, target.y);
+            if (target.alive) {
+                // Broadcast explosion animation
+                this.game.server.broadcast('EX', target.sid, target.x, target.y);
+                
+                // Kill the player
+                target.changeHealth(-target.health, null);
+            }
         });
         
         return { success: true, message: `Exploded ${targets.length} player(s)` };

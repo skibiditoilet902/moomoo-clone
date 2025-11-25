@@ -136,7 +136,7 @@ Once logged in, admins:
 #### Appearance & Transformations
 - `/cowmode [player ID] [seconds]` - Turn into cow
 - `/animalify [player ID] [animal] [seconds]` - Transform into animal
-- `/explode [player ID]` - Particle explosion effect
+- `/explode [player ID]` or `/explode` - Particle explosion effect (no player ID = explode yourself)
 - `/size [player ID] [scale]` - Resize player and weapon (damage scales)
 - `/bighead [player ID] [size]` - Enlarge head (0 resets)
 - `/rainbow [player ID]` - Cycle skin colors
