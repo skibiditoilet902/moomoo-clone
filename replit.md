@@ -72,12 +72,116 @@ The game server serves both the static client assets and WebSocket connections o
   - Added onload handler cleanup to prevent memory leaks
 - **Impact**: All projectiles now render as proper sprites (arrows/bullets) at their original intended sizes
 
+## Admin Command System (November 25, 2025)
+
+### Overview
+A comprehensive admin system has been integrated based on the Sanctuary MooMoo.io private server architecture. The system provides 80+ commands for server moderation, player management, and fun interactions.
+
+### Admin Login
+Players become admins by executing:
+```
+/login zahrefrida
+```
+
+Once logged in, admins:
+- See their own player ID immediately
+- Can view all player IDs
+- Have access to all admin commands
+- Normal players can only use `/report [player name]`
+
+### Environment Variables
+- `MODERATOR_PASSWORD` - Password for admin login (stored as Replit secret)
+- `MAX_CPS` - Clicks per second cap (default: 25)
+- `PLAYER_NEARBY_RADIUS` - Player visibility radius
+- `GAMEOBJECT_NEARBY_RADIUS` - Structure visibility radius
+
+### Command Categories
+
+#### Player Stats & Inventory
+- `/give [player ID|all] [resource] [amount]` - Add resources (wood, stone, food, gold)
+- `/remove [player ID] [resource] [amount]` - Remove resources
+- `/set [player ID] [attribute] [value]` - Set health/food/wood/stone/kills/xp/gold/damage
+- `/all inventory` - Grant 10M resources, all hats/accessories, emerald weapons
+
+#### Weapon Commands
+- `/weapongive [player ID] [weapon ID 1-16]` - Add weapon without removing existing
+- `/setweaponspeed [player ID] [value]` - Change attack speed (0 resets)
+- `/weaponvariant [player ID] [2-5]` - 2=Gold, 3=Diamond, 4=Ruby, 5=Emerald
+- `/set [player ID] damage [value|normal]` - Modify weapon damage
+
+#### Player Manipulation
+- `/kill player [player ID]` - Instantly kill player
+- `/kick player [player ID]` - Kick from server
+- `/ban [player ID] [seconds]` - Ban temporarily (default: 7 days)
+- `/pardon [player ID]` - Unban player
+- `/freeze [player ID]` - Prevent movement/attack
+- `/unfreeze [player ID]` - Restore mobility
+- `/lowdmg [player ID] [seconds]` - Reduce damage to 0.1
+- `/strongbonk [player ID] [intensity]` - Modify knockback (0 resets)
+
+#### Movement & Teleport
+- `/randomteleport [player ID]` - Random teleportation
+- `/teleportto [player ID]` / `/tp [player ID]` - Teleport to player
+- `/bring [player ID|all|every]` - Bring players to admin location
+- `/speed [multiplier]` - Change admin speed
+
+#### Hats & Accessories
+- `/hat [player ID] [hat ID|all]` - Equip specific or all hats
+- `/accessory [player ID] [acc ID|all]` - Equip accessories
+- `/all hats [player ID]` - Unlock all hats
+- `/all accessories [player ID]` - Unlock all accessories
+- Hat Effects: `/hatbig`, `/hatspin`, `/hatglitch`, `/hatshake`, `/hatmissing`, 
+  `/hatdrop`, `/hatrandom`, `/hatupside`, `/hatrainbow`, `/hatgrow`, `/hatswitch`, `/hattroll`
+
+#### Appearance & Transformations
+- `/cowmode [player ID] [seconds]` - Turn into cow
+- `/animalify [player ID] [animal] [seconds]` - Transform into animal
+- `/explode [player ID]` - Particle explosion effect
+- `/size [player ID] [scale]` - Resize player and weapon (damage scales)
+- `/bighead [player ID] [size]` - Enlarge head (0 resets)
+- `/rainbow [player ID]` - Cycle skin colors
+
+#### Visual & Screen Effects
+- `/darkmode [player ID] [seconds]` - Darken screen
+- `/shake [player ID] [intensity]` - Shake character
+- `/spin [player ID] [speed]` - Spin character
+- `/invisible [player ID]` - Make invisible
+- `/visible [player ID]` - Restore visibility
+- `/shield [player ID]` / `/invincible` - Toggle invincibility
+
+#### Animals & Bosses
+- `/spawn [type] [amount]` - Spawn creatures
+  - Bosses: moofie, moostafa, vince, sid
+  - Animals: wolf, bull, bully
+
+#### Reports & Moderation
+- `/report [player name]` - Send report (available to all players)
+- `/reports` - View all reports with player info
+- `/warn [player ID]` - Issue warning (5 warnings = 7-day ban)
+
+#### Fun & Troll Commands
+- `/police` - Cycle hats to simulate police lights
+- `/crash [player ID]` - Disconnect player by flooding
+- `/enable` - Place unlimited resources at cursor
+- `/disable` - Disable unlimited placement
+- `/broadcast [message]` - Display message to all players
+- `/promote [player ID]` - Promote player to admin
+- `/restart` - Stop server (5 second warning)
+
+### Technical Implementation
+- **Admin Properties**: `isAdmin`, `isFrozen`, `isInvisible`, `isInvincible`, `customDamage`, `weaponSpeed`, `speedMultiplier`, etc.
+- **Movement System**: Respects freeze status and speed multipliers
+- **Command Parser**: Intercepts chat messages starting with `/`
+- **Error Handling**: Graceful error messages for invalid commands
+- **Security**: MODERATOR_PASSWORD stored as Replit secret
+
 ## Current State
 - ✅ All dependencies installed
 - ✅ Client successfully built with security fixes
 - ✅ Server running on port 5000
 - ✅ Security vulnerabilities addressed
 - ✅ Projectile rendering bug fixed
+- ✅ Comprehensive admin command system integrated (80+ commands)
 - ⏳ Deployment configuration pending
 
 ## Notes

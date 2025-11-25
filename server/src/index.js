@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import e from "express";
 import path from "node:path";
 import fs from "node:fs";
@@ -12,6 +13,7 @@ import { hats, accessories } from "./moomoo/modules/store.js";
 import { filter_chat } from "./moomoo/libs/filterchat.js";
 import { config } from "./moomoo/config.js";
 import { ConnectionLimit } from "./moomoo/libs/limit.js";
+import { AdminCommands } from "./moomoo/modules/adminCommands.js";
 import { fileURLToPath } from "node:url";
 
 const app = e();
@@ -48,6 +50,7 @@ if (!fs.existsSync(INDEX)) {
 }
 
 const game = new Game;
+const adminCommands = new AdminCommands(game);
 
 app.get("/", (req, res) => {
     res.sendFile(INDEX)
@@ -96,6 +99,15 @@ wss.on("connection", async (socket, req) => {
 
     const addr = req.headers["x-forwarded-for"]?.split(",")[0] ?? req.socket.remoteAddress;
 
+    if (adminCommands.bannedIPs.has(addr)) {
+        const banExpiry = adminCommands.bannedIPs.get(addr);
+        if (banExpiry > Date.now()) {
+            return void socket.close(4003);
+        } else {
+            adminCommands.bannedIPs.delete(addr);
+        }
+    }
+
     if (
         colimit.check(addr)
     ) {
@@ -105,6 +117,7 @@ wss.on("connection", async (socket, req) => {
     colimit.up(addr);
 
     const player = game.addPlayer(socket);
+    player.ipAddress = addr;
 
     const emit = async (type, ...data) => {
 
@@ -442,7 +455,25 @@ wss.on("connection", async (socket, req) => {
                         break;
                     }
 
-                    const chat = filter_chat(data[0]);
+                    const rawMessage = data[0];
+
+                    if (rawMessage.startsWith('/')) {
+                        const commandData = adminCommands.parseCommand(rawMessage, player);
+                        if (commandData) {
+                            try {
+                                const result = await adminCommands.executeCommand(commandData);
+                                if (result && result.message) {
+                                    player.send("6", -1, result.message);
+                                }
+                            } catch (error) {
+                                console.error('Admin command error:', error);
+                                player.send("6", -1, 'Command error: ' + error.message);
+                            }
+                        }
+                        break;
+                    }
+
+                    const chat = filter_chat(rawMessage);
 
                     if (chat.length === 0) {
                         break;

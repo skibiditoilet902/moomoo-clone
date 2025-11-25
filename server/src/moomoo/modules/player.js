@@ -74,6 +74,26 @@ export class Player {
         this.needsResourceSync = false;
         this.clientCps = 0;
         this.clientPing = -1;
+        
+        this.isAdmin = false;
+        this.adminLevel = null;
+        this.isFrozen = false;
+        this.isInvisible = false;
+        this.isInvincible = false;
+        this.customDamage = null;
+        this.weaponSpeed = 1;
+        this.weaponVariant = 0;
+        this.knockbackMultiplier = 1;
+        this.speedMultiplier = 1;
+        this.hatEffect = null;
+        this.animalMode = null;
+        this.sizeScale = 1;
+        this.headSize = 1;
+        this.rainbowMode = false;
+        this.shakeIntensity = 0;
+        this.spinSpeed = 0;
+        this.unlimitedPlace = false;
+        this.policeInterval = null;
 
         // SPAWN:
         this.spawn = function(moofoll) {
@@ -346,12 +366,12 @@ export class Player {
             if (this.xVel || this.yVel) {
                 this.noMovTimer = 0;
             }
-            if (this.lockMove) {
+            if (this.lockMove || this.isFrozen) {
                 this.xVel = 0;
                 this.yVel = 0;
             } else {
                 var buildPenalty = (this.buildIndex >= 0) ? (config.physics ? config.physics.buildingSpeedPenalty : 0.5) : 1;
-                var spdMult = buildPenalty * (items.weapons[this.weaponIndex].spdMult || 1) * (this.skin ? this.skin.spdMult || 1 : 1) * (this.tail ? this.tail.spdMult || 1 : 1) * (this.y <= config.snowBiomeTop ? this.skin && this.skin.coldM ? 1 : config.snowSpeed : 1) * this.slowMult;
+                var spdMult = buildPenalty * (items.weapons[this.weaponIndex].spdMult || 1) * (this.skin ? this.skin.spdMult || 1 : 1) * (this.tail ? this.tail.spdMult || 1 : 1) * (this.y <= config.snowBiomeTop ? this.skin && this.skin.coldM ? 1 : config.snowSpeed : 1) * this.slowMult * (this.speedMultiplier || 1);
                 if (!this.zIndex && this.y >= config.mapScale / 2 - config.riverWidth / 2 && this.y <= config.mapScale / 2 + config.riverWidth / 2) {
                     if (this.skin && this.skin.watrImm) {
                         spdMult *= (config.water ? config.water.immunitySpeedMultiplier : 0.75);
@@ -487,7 +507,8 @@ export class Player {
                         }
                         this.gathering = this.mouseState;
                         if (worked) {
-                            this.reloads[this.weaponIndex] = items.weapons[this.weaponIndex].speed * (this.skin ? this.skin.atkSpd || 1 : 1);
+                            var weaponSpeedMult = (this.weaponSpeed && this.weaponSpeed !== 1) ? (1 / this.weaponSpeed) : 1;
+                            this.reloads[this.weaponIndex] = items.weapons[this.weaponIndex].speed * (this.skin ? this.skin.atkSpd || 1 : 1) * weaponSpeedMult;
                         }
                     }
                 }
@@ -547,6 +568,9 @@ export class Player {
 
         // CHANGE HEALTH:
         this.changeHealth = function(amount, doer) {
+            if (this.isInvincible && amount < 0) {
+                return false;
+            }
             if (amount > 0 && this.health >= this.maxHealth) {
                 return false;
             }
@@ -555,6 +579,9 @@ export class Player {
             }
             if (amount < 0 && this.tail) {
                 amount *= this.tail.dmgMult || 1;
+            }
+            if (amount < 0 && doer && doer.customDamage) {
+                amount = -Math.abs(doer.customDamage);
             }
             if (amount < 0) {
                 this.hitTime = Date.now();
@@ -887,6 +914,9 @@ export class Player {
         // CAN SEE:
         this.canSee = function(other) {
             if (!other) {
+                return false;
+            }
+            if (other.isInvisible && other !== this) {
                 return false;
             }
             if (other.skin && other.skin.invisTimer && other.noMovTimer >= other.skin.invisTimer) {
