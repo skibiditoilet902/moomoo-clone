@@ -2286,6 +2286,10 @@ function updateGame() {
 
                 if (tmpObj.skinIndex != 10 || (tmpObj == player) || (tmpObj.team && tmpObj.team == player.team)) {
                     var tmpText = (tmpObj.team ? "[" + tmpObj.team + "] " : "") + (tmpObj.name || "");
+                    // Add player ID for admins
+                    if (player && player.isAdmin && tmpObj.sid !== undefined) {
+                        tmpText = "[ID: " + tmpObj.sid + "] " + tmpText;
+                    }
                     if (tmpText != "") {
                         mainContext.font = (tmpObj.nameScale || 30) + "px Hammersmith One";
                         mainContext.fillStyle = "#fff";

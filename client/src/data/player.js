@@ -181,6 +181,7 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
         this.maxHealth = data[7];
         this.scale = data[8];
         this.skinColor = data[9];
+        this.isAdmin = data[10] ? true : false;
     };
 
     var timerCount = 0;

@@ -258,7 +258,7 @@ export class Player {
 
         // GET DATA TO SEND:
         this.getData = function() {
-            return [this.id, this.sid, this.name, UTILS.fixTo(this.x, 2), UTILS.fixTo(this.y, 2), UTILS.fixTo(this.dir, 3), this.health, this.maxHealth, this.scale, this.skinColor];
+            return [this.id, this.sid, this.name, UTILS.fixTo(this.x, 2), UTILS.fixTo(this.y, 2), UTILS.fixTo(this.dir, 3), this.health, this.maxHealth, this.scale, this.skinColor, this.isAdmin ? 1 : 0];
         };
 
         this.getInfo = function() {
@@ -293,6 +293,7 @@ export class Player {
             this.maxHealth = data[7];
             this.scale = data[8];
             this.skinColor = data[9];
+            this.isAdmin = data[10] ? true : false;
         };
 
         // UPDATE:
