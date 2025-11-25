@@ -154,8 +154,8 @@ export class AiManager {
             spawnDelay: 60000,
             noTrap: true,
             colDmg: 100,
-            dmg: 40,
-            killScore: 10000,
+            dmg: 50,
+            killScore: 5000,
             health: 25000,
             weightM: 0.4,
             speed: 0.0007,
@@ -167,7 +167,7 @@ export class AiManager {
             hitRange: 210,
             hitDelay: 1000,
             chargePlayer: true,
-            drop: ["food", 100]
+            drop: ["food", 100, "gold", 10000]
         }, {
             id: 10,
             name: "VINCE",
@@ -179,8 +179,8 @@ export class AiManager {
             spawnDelay: 60000,
             noTrap: true,
             colDmg: 100,
-            dmg: 40,
-            killScore: 10000,
+            dmg: 50,
+            killScore: 5000,
             health: 22000,
             weightM: 0.4,
             speed: 0.0007,
@@ -192,7 +192,7 @@ export class AiManager {
             hitRange: 210,
             hitDelay: 1000,
             chargePlayer: true,
-            drop: ["food", 100]
+            drop: ["food", 100, "gold", 10000]
         }];
 
         // SPAWN AI:
