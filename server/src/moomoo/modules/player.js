@@ -837,6 +837,10 @@ export class Player {
             for (var i = 0; i < players.length + ais.length; ++i) {
                 tmpObj = players[i] || ais[i - players.length];
                 if (tmpObj != this && tmpObj.alive && !(tmpObj.team && tmpObj.team == this.team)) {
+                    // Editor mode can't hit AI
+                    if (this.gameMode === 1 && tmpObj.isAI) {
+                        continue;
+                    }
                     tmpDist = UTILS.getDistance(this.x, this.y, tmpObj.x, tmpObj.y) - tmpObj.scale * 1.8;
                     if (tmpDist <= weaponRange) {
                         tmpDir = UTILS.getDirection(tmpObj.x, tmpObj.y, this.x, this.y);

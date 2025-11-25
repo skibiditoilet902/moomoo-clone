@@ -1566,15 +1566,15 @@ export class AdminCommands {
             
             // If entering editor mode, unlock all items
             if (mode === 1) {
-                // Unlock all buildings
+                // Unlock all buildings - clear and add all by their IDs
+                target.items = [];
                 for (let i = 0; i < items.list.length; i++) {
-                    target.items.push(i);
+                    target.items.push(items.list[i].id);
                 }
-                // Unlock all weapons
+                // Unlock all weapons - map by type
+                target.weapons = {};
                 for (let i = 0; i < items.weapons.length; i++) {
-                    if (!target.weapons.includes(i)) {
-                        target.weapons.push(i);
-                    }
+                    target.weapons[items.weapons[i].type] = items.weapons[i].id;
                 }
                 // Unlock all accessories
                 for (let i = 0; i < hats.length; i++) {
@@ -1583,7 +1583,9 @@ export class AdminCommands {
                 for (let i = 0; i < accessories.length; i++) {
                     target.tails[accessories[i].id] = 1;
                 }
-                // Send updated inventory
+                // Send updated inventory to client
+                target.send('V', target.items, 0);  // Send buildings
+                target.send('V', target.weapons, 1);  // Send weapons
                 target.needsResourceSync = true;
             }
             

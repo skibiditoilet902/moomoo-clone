@@ -432,9 +432,15 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
         
         // Editor mode: place at cursor position
         if (this.gameMode === 1) {
-            // Convert screen coordinates to world coordinates
-            tmpX = camX + (mouseX - screenWidth / 2);
-            tmpY = camY + (mouseY - screenHeight / 2);
+            // Get viewport dimensions
+            var viewHalfWidth = screenWidth / 2;
+            var viewHalfHeight = screenHeight / 2;
+            // Mouse offset from center of screen (in pixels)
+            var pixelX = mouseX - viewHalfWidth;
+            var pixelY = mouseY - viewHalfHeight;
+            // Convert to world coordinates
+            tmpX = camX + pixelX;
+            tmpY = camY + pixelY;
         } else {
             // Normal mode: place in front of player
             var tmpS = (this.scale + item.scale + (item.placeOffset || 0));
