@@ -1,0 +1,289 @@
+MooMoo.io Clone Admin Command System (Polished Version)
+
+This document outlines a comprehensive admin command system for a MooMoo.io clone, including player permissions, command formats, login systems, and server configuration. It is designed to be clear, logical, and developer-friendly.
+
+1. Admin Rules and Permissions
+1.1 Automatic Admin Assignment
+
+Players automatically become admin only after executing the command:
+
+/login zahrefrida
+
+
+Once logged in, the admin immediately sees their own player ID and the IDs of all other players.
+
+Players who do not log in remain normal players; their IDs are hidden from everyone except admins.
+
+1.2 ID Visibility
+
+Admins can see all player IDs at all times, including their own.
+
+Normal players cannot see IDs.
+
+1.3 Command Access
+
+Admins: Can execute all admin commands.
+
+Normal players: Can only execute the /report [player name] command.
+
+Commands must not crash the game and should work without limits unless explicitly stated.
+
+2. Command Format
+
+Commands that target players use player IDs instead of slashes.
+Example:
+
+/kick [player ID]
+/speed [player ID] [value]
+
+
+Commands support the keyword all to target every player simultaneously:
+
+/give all wood 100000
+
+3. Player Stats & Inventory Commands
+
+/give [player ID] [resource] [amount] – Adds resources (wood, stone, gold, food).
+
+/remove [player ID] [resource] [amount] – Removes resources.
+
+/set [player ID] [resource] [amount] – Sets resource amounts.
+
+/all inventory – Grants 10 million of each resource, unlocks all hats/accessories, and upgrades all weapons to emerald.
+
+4. Weapon Commands
+
+/weapongive [player ID] [weapon ID] – Adds a weapon without removing existing ones. Weapon IDs 1–16.
+
+/setweaponspeed [player ID] [value] – Changes attack speed. /setweaponspeed [player ID] 0 resets to default.
+
+/set [player ID] damage [value|normal] – Changes weapon damage. normal restores default.
+
+/weaponvariant [player ID] [variant ID] – Changes weapon variant: 2=Gold, 3=Diamond, 4=Ruby, 5=Emerald.
+
+5. Player Manipulation Commands
+
+/kill player [player ID] – Instantly kills a player.
+
+/kick player [player ID] – Kicks the player from the server.
+
+/ban [player ID] [seconds] – Temporarily bans a player (default: 7 days).
+
+/pardon [player ID] – Unbans the player.
+
+/freeze [player ID] – Player cannot move or attack; visible to all.
+
+/unfreeze [player ID] – Restores mobility and attack.
+
+/lowdmg [player ID] [seconds] – Reduces weapon damage to 0.1.
+
+/strongbonk [player ID] [intensity] – Changes knockback; /strongbonk [player ID] 0 resets.
+
+6. Movement & Teleport Commands
+
+/randomteleport [player ID] – Teleports a player randomly.
+
+/teleportto [player ID] – Teleports admin to the player.
+
+/bring [player ID | all | every] – Brings players to admin.
+
+7. Hat & Accessory Commands
+
+/hat [player ID] [hat ID | all] – Equip specific or all hats.
+
+/accessory [player ID] [accessory ID | all] – Equip specific or all accessories.
+
+/all hats [player ID] – Unlock all hats.
+
+/all accessories [player ID] – Unlock all accessories.
+
+Hat Effects (scan current hat first):
+
+/hatbig, /hatspin, /hatglitch, /hatshake, /hatmissing, /hatdrop,
+/hatrandom, /hatupside, /hatrainbow, /hatgrow, /hatswitch, /hattroll
+
+8. Player Appearance & Transformations
+
+/cowmode [player ID] [seconds] – Turns player into a cow.
+
+/animalify [player ID] [animal] [seconds] – Transforms player into an animal.
+
+/explode [player ID] – Player explodes into particles.
+
+/size [player ID] [scale] – Resizes player and weapon (damage scales).
+
+/bighead [player ID] [size] – Enlarges head only; /bighead [player ID] 0 resets.
+
+/rainbow [player ID] – Cycles through skin colors.
+
+9. Visual & Screen Effects ( except for the invisible it make you actually invisible. for both players screen)
+
+/darkmode [player ID] [seconds] – Darkens screen.
+
+/shake [player ID] [intensity] – Shakes character.
+
+/spin [player ID] [speed] – Spins character while allowing movement.
+
+/invisible [player ID] – Makes player invisible.
+
+/visible [player ID] – Restores visibility.
+
+/shield [player ID] – Grants invincibility (toggle with same command).
+
+10. Animal & Boss Commands
+
+/spawn [animal|boss] [amount] – Spawns animals or bosses.
+
+Bosses: moofie, moostafa, vince, sid
+
+Animals: wolf, bull, bully
+
+Example:
+
+/spawn wolf 10
+
+11. Report & Moderation System
+
+/report [player name] – Sends report to database.
+
+/reports – Admins view all reports, including name, ID, and number of reports.
+
+/warn [player ID] – Issues a warning. Five warnings = automatic 7-day ban.
+
+12. Fun & Troll Commands (Visible to All)
+
+/police – Cycles hats to simulate police lights (requires owning hats).
+
+/crash [player ID] – Disconnects player by flooding data.
+
+/freeze, /unfreeze, /animalify, /explode, /spin, /shake, /cowmode, /hattroll – Affect actual game state, visible to all.
+
+/enable / /disable – Place unlimited resources at cursor; supports click-and-drag.
+
+13. Private Server Admin Commands (Optional Login System)
+13.1 Login & Password System
+
+Admins log in using:
+
+/login <password>
+
+
+The password is stored in an environment variable: MODERATOR_PASSWORD.
+
+Example .env file:
+
+PORT=8080
+MAX_CPS=20
+MODERATOR_PASSWORD=password123
+
+13.2 Admin Commands
+
+/promote [player ID] – Promote a player to permanent admin.
+
+/ban [player ID] – Ban a player by IP (moderators cannot be banned).
+
+/kick [player ID] – Kick a user.
+
+/broadcast [message] – Display message to all players.
+
+/restart – Stops the server.
+
+/speed [speed multiplier] – Changes your speed.
+
+/weaponVariant [variant] [player ID] – Changes weapon variant (default: self).
+
+/tp [destination player ID] – Teleport to player.
+
+/invincible – Toggle invincibility.
+
+/invisible – Toggle invisibility.
+
+/set [player ID] [health/food/wood/stone/kills/xp/gold] [number] – Sets numerical attribute.
+
+Note: Commands can be executed from the chat (prefix /) or the terminal running the server.
+
+14. Environment Variables
+
+PORT – Server port (default: 3000).
+
+MAX_CPS – Clicks-per-second cap (default: 25).
+
+PLAYER_NEARBY_RADIUS – Radius for player visibility.
+
+GAMEOBJECT_NEARBY_RADIUS – Radius for structures visibility.
+
+MODERATOR_PASSWORD – Password for admin login.
+
+15. Key Notes
+
+Admins are automatically assigned after /login zahrefrida.
+
+Admins can see all player IDs; normal players cannot.
+
+Commands affecting weapons, hats, resources, or player states scan current status before applying changes.
+
+Commands support all for targeting every player unless restricted.
+
+Private server login ensures additional security for temporary and permanent admins.
+
+MooMoo.io Clone Admin Commands – Developer Cheat Sheet
+Category	Command	Parameters	Description	Example
+Login / Admin Assignment	/login	<password>	Admin login using a secure password.	/login zahrefrida
+	/promote	[player ID]	Promote a player to permanent admin.	/promote 2
+Player Stats & Inventory	/give	`[player ID	all] [resource] [amount]`	Adds resources to a player or all.
+	/remove	[player ID] [resource] [amount]	Removes resources.	/remove 2 stone 50
+	/set	[player ID] [resource] [amount]	Sets resource amount.	/set 2 food 1000
+	/all inventory	-	Grants 10M of each resource, all hats/accessories, emerald weapons.	/all inventory
+Weapon Commands	/weapongive	[player ID] [weapon ID]	Adds weapon to player.	/weapongive 2 5
+	/setweaponspeed	[player ID] [value]	Changes attack speed. 0 resets.	/setweaponspeed 2 2
+	/set damage	`[player ID] [value	normal]`	Changes weapon damage.
+	/weaponvariant	[player ID] [variant ID]	Changes weapon variant: 2=Gold,3=Diamond,4=Ruby,5=Emerald	/weaponvariant 2 4
+Player Manipulation	/kill player	[player ID]	Instantly kills a player.	/kill player 2
+	/kick player	[player ID]	Kicks player from server.	/kick player 3
+	/ban	[player ID] [seconds]	Temporarily bans a player. Default: 7 days	/ban 4 604800
+	/pardon	[player ID]	Unbans a player.	/pardon 4
+	/freeze	[player ID]	Freezes a player; visible to all.	/freeze 2
+	/unfreeze	[player ID]	Unfreezes player.	/unfreeze 2
+	/lowdmg	[player ID] [seconds]	Reduces damage to 0.1.	/lowdmg 2 30
+	/strongbonk	[player ID] [intensity]	Modifies knockback; 0 resets.	/strongbonk 2 5
+Movement / Teleport	/randomteleport	[player ID]	Teleports player randomly.	/randomteleport 2
+	/teleportto	[player ID]	Teleports admin to player.	/teleportto 2
+	/bring	`[player ID	all	every]`
+Hats & Accessories	/hat	`[player ID] [hat ID	all]`	Equip specific or all hats.
+	/accessory	`[player ID] [accessory ID	all]`	Equip specific or all accessories.
+	/all hats	[player ID]	Unlocks all hats.	/all hats 2
+	/all accessories	[player ID]	Unlocks all accessories.	/all accessories 2
+	Hat Effects	-	Visual effects for hats.	/hatspin 2
+Appearance / Transformations	/cowmode	[player ID] [seconds]	Turns player into cow.	/cowmode 2 30
+	/animalify	[player ID] [animal] [seconds]	Transform into animal.	/animalify 2 wolf 20
+	/explode	[player ID]	Player explodes into particles.	/explode 2
+	/size	[player ID] [scale]	Resizes player & weapon; damage scales.	/size 2 1.5
+	/bighead	[player ID] [size]	Enlarges head only; 0 resets.	/bighead 2 3
+	/rainbow	[player ID]	Cycles skin colors.	/rainbow 2
+Visual / Screen Effects	/darkmode	[player ID] [seconds]	Darkens screen.	/darkmode 2 10
+	/shake	[player ID] [intensity]	Shakes character.	/shake 2 5
+	/spin	[player ID] [speed]	Spins character.	/spin 2 10
+	/invisible	[player ID]	Makes player invisible.	/invisible 2
+	/visible	[player ID]	Restores visibility.	/visible 2
+	/shield	[player ID]	Grants invincibility; toggle.	/shield 2
+Animals / Bosses	/spawn	`[animal	boss] [amount]`	Spawns creatures.
+Reports / Moderation	/report	[player name]	Sends report.	/report Player123
+	/reports	-	Admin view of reports.	/reports
+	/warn	[player ID]	Adds warning. 5 = 7-day ban.	/warn 2
+Fun / Troll Commands	/police	-	Simulates police lights via hats.	/police
+	/crash	[player ID]	Disconnects player by flooding.	/crash 2
+	/enable / /disable	-	Place unlimited resources at cursor.	/enable
+	Other Game-State Commands	[player ID]	/freeze, /unfreeze, /animalify, /explode, /spin, /shake, /cowmode, /hattroll	/spin 2 5
+Environment Variables
+Variable	Default	Description
+PORT	3000	Server port.
+MAX_CPS	25	Max clicks per second.
+PLAYER_NEARBY_RADIUS	N/A	Radius for player visibility.
+GAMEOBJECT_NEARBY_RADIUS	N/A	Radius for structure visibility.
+MODERATOR_PASSWORD	N/A	Password for admin login system.
+
+Example .env file
+
+PORT=8080
+MAX_CPS=20
+MODERATOR_PASSWORD=password123
