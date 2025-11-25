@@ -828,6 +828,10 @@ export class Player {
                                 dmgMlt = items.weapons[tmpObj.weaponIndex].shield;
                             }
                             var dmgVal = items.weapons[this.weaponIndex].dmg * (this.skin && this.skin.dmgMultO ? this.skin.dmgMultO : 1) * (this.tail && this.tail.dmgMultO ? this.tail.dmgMultO : 1);
+                            // Apply custom damage boost for both players and animals
+                            if (this.customDamage) {
+                                dmgVal = this.customDamage;
+                            }
                             var tmpSpd = (0.3 * (tmpObj.weightM || 1) + (items.weapons[this.weaponIndex].knock || 0)) * (this.knockbackMultiplier || 1);
                             tmpObj.xVel += tmpSpd * mathCOS(tmpDir);
                             tmpObj.yVel += tmpSpd * mathSIN(tmpDir);

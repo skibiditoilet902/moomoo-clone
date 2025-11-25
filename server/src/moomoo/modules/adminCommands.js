@@ -356,24 +356,41 @@ export class AdminCommands {
 
     handleSet(params, player) {
         if (params.length < 2) {
-            return { success: false, message: 'Usage: /set [attribute] [value] or /set [player ID] [attribute] [value]' };
+            return { success: false, message: 'Usage: /set [attribute] [value] [player ID] or /set [player ID] [attribute] [value]' };
         }
         
         // Determine if first param is player ID or attribute
         let targets = [];
         let attributeIndex = 0;
         let valueIndex = 1;
+        let playerIdIndex = -1;
         
-        // Try to parse first param as player ID
-        const firstAsId = parseInt(params[0]);
-        if (Number.isFinite(firstAsId) && params.length >= 3) {
-            // Format: /set [player ID] [attribute] [value]
-            targets = this.getTargetPlayer(params[0]);
-            attributeIndex = 1;
-            valueIndex = 2;
-        } else {
-            // Format: /set [attribute] [value] - apply to self
-            targets = [player];
+        // Check if last param is a player ID
+        const lastAsId = parseInt(params[params.length - 1]);
+        if (Number.isFinite(lastAsId) && params.length >= 3) {
+            // Format: /set [attribute] [value] [player ID]
+            if (!Number.isFinite(parseInt(params[0]))) {
+                attributeIndex = 0;
+                valueIndex = 1;
+                playerIdIndex = params.length - 1;
+                targets = this.getTargetPlayer(params[playerIdIndex]);
+            }
+        }
+        
+        // If no targets yet, try first param as player ID
+        if (targets.length === 0) {
+            const firstAsId = parseInt(params[0]);
+            if (Number.isFinite(firstAsId) && params.length >= 3) {
+                // Format: /set [player ID] [attribute] [value]
+                targets = this.getTargetPlayer(params[0]);
+                attributeIndex = 1;
+                valueIndex = 2;
+            } else {
+                // Format: /set [attribute] [value] - apply to self
+                targets = [player];
+                attributeIndex = 0;
+                valueIndex = 1;
+            }
         }
         
         if (targets.length === 0) {
