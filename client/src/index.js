@@ -1835,28 +1835,12 @@ function adminLoginShowPlayers(allPlayers) {
             return;
         }
         
-        // Show confirmation dialog
-        const confirmed = confirm("Admin logged in! View all player IDs and names on the server?");
-        
-        if (confirmed) {
-            // Create a detailed player list
-            let playerInfo = "=== SERVER PLAYERS ===\n\n";
-            playerInfo += `Total: ${allPlayers.length} player(s)\n\n`;
-            
-            allPlayers.forEach(p => {
-                const health = p.health ? `${p.health}/${p.maxHealth}` : "Dead";
-                playerInfo += `ID: ${p.sid} | Name: ${p.name} | Health: ${health}\n`;
-            });
-            
-            // Show the list in an alert
-            alert(playerInfo);
-            
-            // Also copy to console for easier reference
-            console.log("Admin Player List:", allPlayers);
-            allPlayers.forEach(p => {
-                console.log(`${p.name} - ID: ${p.sid}, Health: ${p.health}/${p.maxHealth}`);
-            });
-        }
+        // Log player list to console for reference
+        console.log(`Server has ${allPlayers.length} player(s):`);
+        allPlayers.forEach(p => {
+            const health = p.health ? `${p.health}/${p.maxHealth}` : "Dead";
+            console.log(`  ID: ${p.sid} | ${p.name} | Health: ${health}`);
+        });
     } catch (e) {
         console.error("Error in adminLoginShowPlayers:", e);
     }
