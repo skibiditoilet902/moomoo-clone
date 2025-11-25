@@ -2008,7 +2008,7 @@ function updateStatusDisplay() {
 }
 
 var iconSprites = {};
-var icons = ["crown", "skull"];
+var icons = ["crown", "skull", "shield"];
 
 function loadIcons() {
     for (var i = 0; i < icons.length; ++i) {
@@ -2390,6 +2390,11 @@ function updateGame() {
                             var tmpS = config.crownIconScale;
                             var tmpX = tmpObj.x - xOffset - (tmpS / 2) + (mainContext.measureText(tmpText).width / 2) + config.crownPad;
                             mainContext.drawImage(iconSprites["skull"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
+                        }
+                        if (tmpObj.isInvincible && iconSprites["shield"].isLoaded) {
+                            var tmpS = config.crownIconScale;
+                            var tmpY = (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5;
+                            mainContext.drawImage(iconSprites["shield"], tmpObj.x - xOffset - (tmpS / 2), tmpY, tmpS, tmpS);
                         }
                     }
                     var statsParts = [];

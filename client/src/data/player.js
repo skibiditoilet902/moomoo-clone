@@ -39,6 +39,7 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     this.skinColor = 0;
     this.cps = 0;
     this.ping = -1;
+    this.isInvincible = false;
 
     this.spawn = function (moofoll) {
         this.active = true;
@@ -183,6 +184,7 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
         this.scale = data[8];
         this.skinColor = data[9];
         this.isAdmin = data[10] ? true : false;
+        this.isInvincible = data[11] ? true : false;
     };
 
     var timerCount = 0;

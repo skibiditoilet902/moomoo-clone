@@ -258,7 +258,7 @@ export class Player {
 
         // GET DATA TO SEND:
         this.getData = function() {
-            return [this.id, this.sid, this.name, UTILS.fixTo(this.x, 2), UTILS.fixTo(this.y, 2), UTILS.fixTo(this.dir, 3), this.health, this.maxHealth, this.scale, this.skinColor, this.isAdmin ? 1 : 0];
+            return [this.id, this.sid, this.name, UTILS.fixTo(this.x, 2), UTILS.fixTo(this.y, 2), UTILS.fixTo(this.dir, 3), this.health, this.maxHealth, this.scale, this.skinColor, this.isAdmin ? 1 : 0, this.isInvincible ? 1 : 0];
         };
 
         this.getInfo = function() {
@@ -295,6 +295,7 @@ export class Player {
             this.scale = data[8];
             this.skinColor = data[9];
             this.isAdmin = data[10] ? true : false;
+            this.isInvincible = data[11] ? true : false;
         };
 
         // UPDATE:
@@ -612,8 +613,9 @@ export class Player {
                     players[i].send("O", this.sid, Math.round(this.health));
                 }
             }
-            if (doer && doer.canSee(this) && !(doer == this && amount < 0)) {
-                doer.send("8", Math.round(this.x), Math.round(this.y), Math.round(-amount), 1);
+            if (doer && doer.canSee(this)) {
+                // Show damage/heal text (healing shows positive, damage shows negative)
+                doer.send("8", Math.round(this.x), Math.round(this.y), Math.round(amount), 1);
             }
             return true;
         };
