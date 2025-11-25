@@ -300,9 +300,13 @@ export class AdminCommands {
         return { success: false, message: 'Incorrect password' };
     }
 
-    getTargetPlayer(targetId) {
+    getTargetPlayer(targetId, excludePlayer = null) {
         if (targetId === 'all' || targetId === 'every') {
             return this.game.players.filter(p => p.alive);
+        }
+        
+        if (targetId === 'others') {
+            return this.game.players.filter(p => p.alive && p !== excludePlayer);
         }
         
         const id = parseInt(targetId);
@@ -515,19 +519,26 @@ export class AdminCommands {
     }
 
     handleWeaponVariant(params, player) {
-        if (params.length < 2) {
-            return { success: false, message: 'Usage: /weaponvariant [player ID] [variant: 0=normal, 2=gold, 3=diamond, 4=ruby, 5=emerald]' };
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /weaponvariant [variant: 2=gold, 3=diamond, 4=ruby, 5=emerald] [optional: all|player_id|others] (default: self)' };
         }
         
-        const targets = this.getTargetPlayer(params[0]);
-        const variant = parseInt(params[1]);
+        const variant = parseInt(params[0]);
+        
+        if (!Number.isFinite(variant) || variant < 2 || variant > 5) {
+            return { success: false, message: 'Variant must be 2-5 (2=gold, 3=diamond, 4=ruby, 5=emerald)' };
+        }
+        
+        // Default to self if no target specified
+        let targets;
+        if (params.length < 2) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[1], player);
+        }
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
-        }
-        
-        if (!Number.isFinite(variant) || variant < 0 || variant > 5) {
-            return { success: false, message: 'Variant must be 0-5' };
         }
         
         targets.forEach(target => {
@@ -545,15 +556,10 @@ export class AdminCommands {
 
     handleKill(params, player) {
         if (params.length < 1) {
-            return { success: false, message: 'Usage: /kill [player ID]' };
+            return { success: false, message: 'Usage: /kill [player ID|all|others] (default: all)' };
         }
         
-        let targets = this.getTargetPlayer(params[0]);
-        
-        // For /kill all, include everyone (including the admin)
-        if (params[0] === 'all' || params[0] === 'every') {
-            targets = this.game.players.filter(p => p.alive);
-        }
+        let targets = this.getTargetPlayer(params[0], player);
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
