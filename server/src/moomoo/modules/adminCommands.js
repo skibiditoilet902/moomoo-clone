@@ -618,7 +618,7 @@ export class AdminCommands {
 
     handleStrongBonk(params, player) {
         if (params.length < 1) {
-            return { success: false, message: 'Usage: /strongbonk [intensity (0 to reset, 1-10 range)]' };
+            return { success: false, message: 'Usage: /strongbonk [intensity (0 to reset, any positive number)]' };
         }
         
         const intensity = parseFloat(params[0]);
@@ -627,11 +627,15 @@ export class AdminCommands {
             return { success: false, message: 'Intensity must be a finite number' };
         }
         
-        const clampedIntensity = intensity === 0 ? 1 : Math.max(0.1, Math.min(intensity, 10));
+        if (intensity < 0) {
+            return { success: false, message: 'Intensity must be 0 or positive' };
+        }
         
-        player.knockbackMultiplier = clampedIntensity;
+        const finalIntensity = intensity === 0 ? 1 : Math.max(0.1, intensity);
         
-        const intensityDisplay = clampedIntensity === 1 ? 'normal' : `${clampedIntensity}x`;
+        player.knockbackMultiplier = finalIntensity;
+        
+        const intensityDisplay = finalIntensity === 1 ? 'normal' : `${finalIntensity}x`;
         return { success: true, message: `Set your knockback to ${intensityDisplay}` };
     }
 
