@@ -166,6 +166,8 @@ export class AdminCommands {
                 break;
             case 'weapongive':
                 return this.handleWeaponGive(params, player);
+            case 'weaponremove':
+                return this.handleWeaponRemove(params, player);
             case 'setweaponspeed':
                 return this.handleSetWeaponSpeed(params, player);
             case 'weaponvariant':
@@ -518,14 +520,18 @@ export class AdminCommands {
 
     handleWeaponGive(params, player) {
         if (params.length < 2) {
-            return { success: false, message: 'Usage: /weapongive [player ID] [weapon ID 1-16]' };
+            return { success: false, message: 'Usage: /weapongive [weapon ID 1-16] [player ID|all|others]' };
         }
         
-        const targets = this.getTargetPlayer(params[0]);
-        const weaponId = parseInt(params[1]);
+        const weaponId = parseInt(params[0]);
+        const targets = this.getTargetPlayer(params[1], player);
         
-        if (targets.length === 0 || weaponId < 1 || weaponId > 16) {
-            return { success: false, message: 'Invalid player or weapon ID' };
+        if (weaponId < 1 || weaponId > 16) {
+            return { success: false, message: 'Invalid weapon ID (must be 1-16)' };
+        }
+        
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
         }
         
         targets.forEach(target => {
@@ -536,6 +542,33 @@ export class AdminCommands {
         });
         
         return { success: true, message: `Gave weapon ${weaponId} to ${targets.length} player(s)` };
+    }
+
+    handleWeaponRemove(params, player) {
+        if (params.length < 2) {
+            return { success: false, message: 'Usage: /weaponremove [weapon ID 1-16] [player ID|all|others]' };
+        }
+        
+        const weaponId = parseInt(params[0]);
+        const targets = this.getTargetPlayer(params[1], player);
+        
+        if (weaponId < 1 || weaponId > 16) {
+            return { success: false, message: 'Invalid weapon ID (must be 1-16)' };
+        }
+        
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+        
+        targets.forEach(target => {
+            const weapon = items.weapons[weaponId];
+            if (weapon) {
+                // Remove weapon by deleting the key associated with that weapon type
+                delete target.weapons[weapon.type];
+            }
+        });
+        
+        return { success: true, message: `Removed weapon ${weaponId} from ${targets.length} player(s)` };
     }
 
     handleSetWeaponSpeed(params, player) {
