@@ -40,6 +40,9 @@ export class Player {
         if (this.customWeaponRange !== undefined && this.customWeaponRange !== null) {
             return this.customWeaponRange;
         }
+        if (!this.items || !this.items.weapons || this.weaponIndex === undefined || !this.items.weapons[this.weaponIndex]) {
+            return 50; // Default range fallback
+        }
         return this.items.weapons[this.weaponIndex].range;
     }
 
