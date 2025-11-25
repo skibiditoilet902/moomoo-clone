@@ -1824,7 +1824,7 @@ function setupGame(yourSID) {
 function showText(x, y, value, type) {
     // type 1 = shielded/invincible, type 0 = normal damage
     var displayText = (type === 1) ? "invincible" : Math.abs(value);
-    var textColor = (type === 1) ? "#ffff00" : ((value >= 0) ? "#fff" : "#8ecc51");
+    var textColor = (type === 1) ? "#fff" : ((value >= 0) ? "#fff" : "#8ecc51");
     textManager.showText(x, y, 50, 0.18, 500, displayText, textColor);
 }
 
@@ -2018,6 +2018,10 @@ function loadIcons() {
         var tmpSprite = new Image();
         tmpSprite.onload = function () {
             this.isLoaded = true;
+            console.log("Icon loaded:", this.src);
+        };
+        tmpSprite.onerror = function() {
+            console.error("Failed to load icon:", this.src);
         };
         tmpSprite.src = ".././img/icons/" + icons[i] + ".png";
         iconSprites[icons[i]] = tmpSprite;
@@ -2383,14 +2387,29 @@ function updateGame() {
                             mainContext.fillStyle = "#ff0000";
                             mainContext.fillText(idText, tmpObj.x - xOffset, idY);
                         }
-                        // Shield icon if player has shield (draw even if not fully loaded)
-                        if (tmpObj.hasShield && iconSprites["shield"]) {
+                        // Shield icon if player has shield
+                        if (tmpObj.hasShield) {
                             var tmpS = config.crownIconScale;
                             var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad - tmpS - 5;
-                            var shieldImg = iconSprites["shield"];
-                            if (shieldImg.width && shieldImg.height) {
-                                mainContext.drawImage(shieldImg, tmpX, (tmpObj.y - yOffset - tmpObj.scale) -
-                                    config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
+                            var tmpY = (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5;
+                            
+                            if (iconSprites["shield"] && iconSprites["shield"].isLoaded) {
+                                try {
+                                    mainContext.drawImage(iconSprites["shield"], tmpX, tmpY, tmpS, tmpS);
+                                } catch(e) {
+                                    console.error("Failed to draw shield:", e);
+                                    // Draw fallback circle
+                                    mainContext.fillStyle = "#4f9fff";
+                                    mainContext.beginPath();
+                                    mainContext.arc(tmpX + tmpS/2, tmpY + tmpS/2, tmpS/2, 0, Math.PI * 2);
+                                    mainContext.fill();
+                                }
+                            } else {
+                                // Draw fallback circle if image not loaded
+                                mainContext.fillStyle = "#4f9fff";
+                                mainContext.beginPath();
+                                mainContext.arc(tmpX + tmpS/2, tmpY + tmpS/2, tmpS/2, 0, Math.PI * 2);
+                                mainContext.fill();
                             }
                         }
                         if (tmpObj.isLeader && iconSprites["crown"].isLoaded) {

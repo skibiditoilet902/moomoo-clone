@@ -236,6 +236,7 @@ export class AdminCommands {
             case 'visible':
                 return this.handleVisible(params, player);
             case 'shield':
+                return this.handleShield(params, player);
             case 'invincible':
                 return this.handleInvincible(params, player);
             case 'spawn':
@@ -262,8 +263,6 @@ export class AdminCommands {
                 return this.handleWeaponRange(params, player);
             case 'gamemode':
                 return this.handleGameMode(params, player);
-            case 'shield':
-                return this.handleShield(params, player);
             default:
                 return { success: false, message: `Unknown command: ${command}` };
         }
