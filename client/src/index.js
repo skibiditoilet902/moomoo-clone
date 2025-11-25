@@ -2479,13 +2479,11 @@ function updateGame() {
         
         mainContext.fillText("=== PLAYER IDS ===", startX, startY);
         
-        // In infinite toggle mode, dynamically use current players list
-        var displayList = playerIDsInfinite ? players : playerIDsToDisplay;
-        
-        // Ensure displayList is an array and filter out invalid entries
-        if (Array.isArray(displayList)) {
-            var validPlayers = displayList.filter(function(p) {
-                return p && p.sid !== undefined && p.name !== undefined;
+        // Always use the dynamic players list so new players appear in real-time
+        // Filter out the admin's own player and any invalid entries
+        if (Array.isArray(players)) {
+            var validPlayers = players.filter(function(p) {
+                return p && p.sid !== undefined && p.name !== undefined && p !== player;
             });
             
             for (var i = 0; i < validPlayers.length; ++i) {
