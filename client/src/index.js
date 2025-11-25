@@ -2187,7 +2187,7 @@ function updateGame() {
     if (true) {
         // Refresh player list when in toggle mode (every 1 second)
         if (playerIDsInfinite && player && (!playerIDsLastRefresh || now - playerIDsLastRefresh >= 1000)) {
-            io.send("6", -1, "/id toggle");
+            io.send("6", "/id toggle");
         }
         
         if (player) {
