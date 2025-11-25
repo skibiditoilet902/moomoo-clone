@@ -257,6 +257,8 @@ export class AdminCommands {
                 return this.handlePromote(params, player);
             case 'restart':
                 return this.handleRestart(params, player);
+            case 'weaponrange':
+                return this.handleWeaponRange(params, player);
             default:
                 return { success: false, message: `Unknown command: ${command}` };
         }
@@ -1173,13 +1175,14 @@ export class AdminCommands {
             'treasure': 7,
             'moofie': 8,
             'sid': 9,
-            'vince': 10
+            'vince': 10,
+            'sheep': 11
         };
         
         const typeIndex = typeMap[type];
         
         if (typeIndex === undefined) {
-            return { success: false, message: `Unknown animal type: ${type}. Valid types: cow, pig, bull, bully, wolf, quack, moostafa, treasure, moofie, sid, vince` };
+            return { success: false, message: `Unknown animal type: ${type}. Valid types: cow, pig, bull, bully, wolf, quack, moostafa, treasure, moofie, sid, vince, sheep` };
         }
         
         // Determine target location
@@ -1382,5 +1385,53 @@ export class AdminCommands {
         }, 5000);
         
         return { success: true, message: 'Server restart initiated' };
+    }
+
+    handleWeaponRange(params, player) {
+        // Parse: /weaponrange [value] [optional player id]
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /weaponrange [number] or /weaponrange normal [optional player id]' };
+        }
+
+        const valueStr = params[0].toLowerCase();
+        const targetPlayerId = params[1] ? parseInt(params[1]) : null;
+
+        // Determine target players
+        let targets = [];
+        if (targetPlayerId !== null) {
+            const target = this.game.players.find(p => p.sid === targetPlayerId);
+            if (!target) {
+                return { success: false, message: 'Player not found' };
+            }
+            targets = [target];
+        } else {
+            targets = [player];
+        }
+
+        // Handle value
+        let value = null;
+        if (valueStr === 'normal') {
+            value = null; // Reset to default
+        } else {
+            value = parseFloat(valueStr);
+            if (!Number.isFinite(value) || value <= 0) {
+                return { success: false, message: 'Weapon range must be a positive number or "normal"' };
+            }
+        }
+
+        // Apply to targets
+        targets.forEach(target => {
+            if (value === null) {
+                target.customWeaponRange = null;
+            } else {
+                target.customWeaponRange = value;
+            }
+        });
+
+        const message = value === null 
+            ? `Reset weapon range to normal for ${targets.length} player(s)`
+            : `Set weapon range to ${value} for ${targets.length} player(s)`;
+
+        return { success: true, message };
     }
 }

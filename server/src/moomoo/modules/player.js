@@ -36,6 +36,13 @@ export class Player {
         this.tailIndex = id;
     }
 
+    getWeaponRange() {
+        if (this.customWeaponRange !== undefined && this.customWeaponRange !== null) {
+            return this.customWeaponRange;
+        }
+        return items.weapons[this.weaponIndex].range;
+    }
+
     constructor(id, sid, config, UTILS, projectileManager, objectManager, players, ais, items, hats, accessories, socket, scoreCallback, iconCallback) {
         this.socket = socket;
         this.id = id;
@@ -770,13 +777,14 @@ export class Player {
             var tmpDir;
             var tmpObj;
             var hitSomething;
-            var tmpList = objectManager.getGridArrays(this.x, this.y, items.weapons[this.weaponIndex].range);
+            var weaponRange = this.getWeaponRange();
+            var tmpList = objectManager.getGridArrays(this.x, this.y, weaponRange);
             for (var t = 0; t < tmpList.length; ++t) {
                 for (var i = 0; i < tmpList[t].length; ++i) {
                     tmpObj = tmpList[t][i];
                     if (tmpObj.active && !tmpObj.dontGather && !hitObjs[tmpObj.sid] && tmpObj.visibleToPlayer(this)) {
                         tmpDist = UTILS.getDistance(this.x, this.y, tmpObj.x, tmpObj.y) - tmpObj.scale;
-                        if (tmpDist <= items.weapons[this.weaponIndex].range) {
+                        if (tmpDist <= weaponRange) {
                             tmpDir = UTILS.getDirection(tmpObj.x, tmpObj.y, this.x, this.y);
                             if (UTILS.getAngleDist(tmpDir, this.dir) <= config.gatherAngle) {
                                 hitObjs[tmpObj.sid] = 1;
@@ -811,7 +819,7 @@ export class Player {
                 tmpObj = players[i] || ais[i - players.length];
                 if (tmpObj != this && tmpObj.alive && !(tmpObj.team && tmpObj.team == this.team)) {
                     tmpDist = UTILS.getDistance(this.x, this.y, tmpObj.x, tmpObj.y) - tmpObj.scale * 1.8;
-                    if (tmpDist <= items.weapons[this.weaponIndex].range) {
+                    if (tmpDist <= weaponRange) {
                         tmpDir = UTILS.getDirection(tmpObj.x, tmpObj.y, this.x, this.y);
                         if (UTILS.getAngleDist(tmpDir, this.dir) <= config.gatherAngle) {
                             // STEAL RESOURCES:
