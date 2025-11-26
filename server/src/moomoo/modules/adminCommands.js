@@ -1552,9 +1552,8 @@ export class AdminCommands {
         
         for (let i = 0; i < amount; i++) {
             const mineData = {
-                name: "mine",
-                health: 100,
-                group: { id: 4, name: "mine" }
+                name: "stone",
+                stone: 10
             };
             
             this.game.object_manager.add(
@@ -1562,14 +1561,14 @@ export class AdminCommands {
                 player.x,
                 player.y,
                 0,
-                40,
-                1,
+                50,
+                0,
                 mineData,
                 true,
                 player
             );
         }
         
-        return { success: true, message: `Spawned ${amount} mine(s) on your location` };
+        return { success: true, message: `Spawned ${amount} stone mine(s) on your location` };
     }
 }
