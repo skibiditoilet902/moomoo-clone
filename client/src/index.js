@@ -2406,7 +2406,8 @@ function updateGame() {
                         }
                         if (tmpObj.isInvincible && iconSprites["shield"].isLoaded) {
                             var tmpS = config.crownIconScale;
-                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
+                            var tmpIconOffset = tmpObj.isLeader ? (tmpS + config.crownPad + 5) : 0;
+                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad - tmpIconOffset;
                             mainContext.drawImage(iconSprites["shield"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
                         }
                     }
