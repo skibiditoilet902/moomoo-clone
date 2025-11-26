@@ -1824,8 +1824,8 @@ function setupGame(yourSID) {
 }
 
 function showText(x, y, value, type) {
-    // If value is negative (damage) = white, if positive (healing) = green
-    textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), (value <= 0) ? "#fff" : "#8ecc51");
+    // Damage/healing colors - all values come in positive from server
+    textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), "#fff");
 }
 
 function showInvincibleText(x, y) {
