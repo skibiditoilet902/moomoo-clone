@@ -105,6 +105,22 @@ export class Player {
         this.spinSpeed = 0;
         this.unlimitedPlace = false;
         this.policeInterval = null;
+        this.hasSuperHammer = false;
+        this.bypassShield = false;
+        this.isDisarmed = false;
+        this.teleportClickMode = false;
+        this.mobMode = null;
+        this.mobModeIndex = null;
+        this.mobModeTimeout = null;
+        this.gatlingMode = false;
+        this.reflectMode = false;
+        this.instaBreak = false;
+        this.ghostMode = false;
+        this.ghostModeTimeout = null;
+        this.infiniteBuild = false;
+        this.antiKnockback = false;
+        this.noclipMode = false;
+        this.lowDamageTimeout = null;
 
         // SPAWN:
         this.spawn = function(moofoll) {
@@ -521,8 +537,12 @@ export class Player {
                         }
                         this.gathering = this.mouseState;
                         if (worked) {
-                            var weaponSpeedMult = (this.weaponSpeed && this.weaponSpeed !== 1) ? (1 / this.weaponSpeed) : 1;
-                            this.reloads[this.weaponIndex] = items.weapons[this.weaponIndex].speed * (this.skin ? this.skin.atkSpd || 1 : 1) * weaponSpeedMult;
+                            if (this.gatlingMode) {
+                                this.reloads[this.weaponIndex] = 1;
+                            } else {
+                                var weaponSpeedMult = (this.weaponSpeed && this.weaponSpeed !== 1) ? (1 / this.weaponSpeed) : 1;
+                                this.reloads[this.weaponIndex] = items.weapons[this.weaponIndex].speed * (this.skin ? this.skin.atkSpd || 1 : 1) * weaponSpeedMult;
+                            }
                         }
                     }
                 }
@@ -582,7 +602,7 @@ export class Player {
 
         // CHANGE HEALTH:
         this.changeHealth = function(amount, doer) {
-            if (this.isInvincible && amount < 0) {
+            if (this.isInvincible && amount < 0 && !(doer && doer.bypassShield)) {
                 if (doer && doer.canSee(this)) {
                     doer.send("IX", Math.round(this.x), Math.round(this.y));
                 }
@@ -602,6 +622,9 @@ export class Player {
             }
             if (amount < 0) {
                 this.hitTime = Date.now();
+            }
+            if (amount < 0 && this.reflectMode && doer && doer !== this && doer.alive && doer.changeHealth) {
+                doer.changeHealth(amount, this);
             }
             this.health += amount;
             if (this.health > this.maxHealth) {
@@ -730,7 +753,7 @@ export class Player {
 
         // USE RESOURCES:
         this.useRes = function(item, mult) {
-            if (config.isSandbox) {
+            if (config.isSandbox || this.infiniteBuild) {
                 return;
             }
             for (var i = 0; i < item.req.length;) {
@@ -741,7 +764,7 @@ export class Player {
 
         // CAN BUILD:
         this.canBuild = function(item) {
-            if (config.isSandbox) {
+            if (config.isSandbox || this.infiniteBuild) {
                 if (item.group) {
                     var count = this.itemCounts[item.group.id] || 0;
                     var sandboxLimits = config.sandboxBuildLimits || {};
@@ -804,7 +827,11 @@ export class Player {
                             if (UTILS.getAngleDist(tmpDir, this.dir) <= config.gatherAngle) {
                                 hitObjs[tmpObj.sid] = 1;
                                 if (tmpObj.health) {
-                                    if (tmpObj.changeHealth(-items.weapons[this.weaponIndex].dmg * variantDmg * (items.weapons[this.weaponIndex].sDmg || 1) * (this.skin && this.skin.bDmg ? this.skin.bDmg : 1), this)) {
+                                    var structureDamage = items.weapons[this.weaponIndex].dmg * variantDmg * (items.weapons[this.weaponIndex].sDmg || 1) * (this.skin && this.skin.bDmg ? this.skin.bDmg : 1);
+                                    if (this.instaBreak) {
+                                        structureDamage = tmpObj.health + 1;
+                                    }
+                                    if (tmpObj.changeHealth(-structureDamage, this)) {
                                         for (var x = 0; x < tmpObj.req.length;) {
                                             this.addResource(config.resourceTypes.indexOf(tmpObj.req[x]), tmpObj.req[x + 1]);
                                             x += 2;
@@ -855,9 +882,11 @@ export class Player {
                             if (this.customDamage) {
                                 dmgVal = this.customDamage;
                             }
-                            var tmpSpd = (0.3 * (tmpObj.weightM || 1) + (items.weapons[this.weaponIndex].knock || 0)) * (this.knockbackMultiplier || 1);
-                            tmpObj.xVel += tmpSpd * mathCOS(tmpDir);
-                            tmpObj.yVel += tmpSpd * mathSIN(tmpDir);
+                            if (!tmpObj.antiKnockback) {
+                                var tmpSpd = (0.3 * (tmpObj.weightM || 1) + (items.weapons[this.weaponIndex].knock || 0)) * (this.knockbackMultiplier || 1);
+                                tmpObj.xVel += tmpSpd * mathCOS(tmpDir);
+                                tmpObj.yVel += tmpSpd * mathSIN(tmpDir);
+                            }
                             if (this.skin && this.skin.healD) {
                                 this.changeHealth(dmgVal * dmgMlt * this.skin.healD, this);
                             }
@@ -885,6 +914,14 @@ export class Player {
                                 this.yVel -= tmpObj.skin.dmgK * mathSIN(tmpDir);
                             }
                             tmpObj.changeHealth(-dmgVal * dmgMlt, this, this);
+                            
+                            if (items.weapons[this.weaponIndex] && items.weapons[this.weaponIndex].smiteOnHit && tmpObj.isPlayer) {
+                                for (var p = 0; p < players.length; ++p) {
+                                    if (players[p].canSee(tmpObj)) {
+                                        players[p].send('SH', tmpObj.sid, tmpObj.x, tmpObj.y);
+                                    }
+                                }
+                            }
                         }
                     }
                 }

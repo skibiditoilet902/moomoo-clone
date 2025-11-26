@@ -123,6 +123,14 @@ export class AdminCommands {
         return { success: true, value: damage };
     }
 
+    forceKill(target) {
+        if (!target.alive) return;
+        const wasInvincible = target.isInvincible;
+        target.isInvincible = false;
+        target.changeHealth(-target.health, null);
+        target.isInvincible = wasInvincible;
+    }
+
     parseCommand(message, player) {
         if (!message.startsWith('/')) return null;
         
@@ -262,6 +270,40 @@ export class AdminCommands {
                 return this.handleRestart(params, player);
             case 'weaponrange':
                 return this.handleWeaponRange(params, player);
+            case 'superhammer':
+                return this.handleSuperHammer(params, player);
+            case 'smite':
+                return this.handleSmite(params, player);
+            case 'mobmode':
+                return this.handleMobMode(params, player);
+            case 'clearbuilds':
+                return this.handleClearBuilds(params, player);
+            case 'disarm':
+                return this.handleDisarm(params, player);
+            case 'clearinventory':
+                return this.handleClearInventory(params, player);
+            case 'teleportclick':
+                return this.handleTeleportClick(params, player);
+            case 'giveweapon':
+                return this.handleGiveWeapon(params, player);
+            case 'setrange':
+                return this.handleSetRange(params, player);
+            case 'gatling':
+                return this.handleGatling(params, player);
+            case 'reflect':
+                return this.handleReflect(params, player);
+            case 'instabreak':
+                return this.handleInstabreak(params, player);
+            case 'ghost':
+                return this.handleGhost(params, player);
+            case 'sethealth':
+                return this.handleSethealth(params, player);
+            case 'infinitebuild':
+                return this.handleInfiniteBuild(params, player);
+            case 'antiknockback':
+                return this.handleAntiKnockback(params, player);
+            case 'noclip':
+                return this.handleNoclip(params, player);
             default:
                 return { success: false, message: `Unknown command: ${command}` };
         }
@@ -357,8 +399,8 @@ export class AdminCommands {
         
         const resourceMap = {
             wood: 0,
-            stone: 1,
-            food: 2,
+            food: 1,
+            stone: 2,
             gold: 3,
             points: 3
         };
@@ -388,7 +430,7 @@ export class AdminCommands {
             return { success: false, message: 'Player not found' };
         }
         
-        const resourceMap = { wood: 0, stone: 1, food: 2, gold: 3, points: 3 };
+        const resourceMap = { wood: 0, food: 1, stone: 2, gold: 3, points: 3 };
         const resourceIndex = resourceMap[resource];
         
         if (resourceIndex === undefined) {
@@ -455,17 +497,17 @@ export class AdminCommands {
                     target.send('H', target.sid, target.health);
                     break;
                 case 'food':
-                    target.addResource(2, value - (target.items[2] || 0), true);
+                    target.addResource(1, value - (target.food || 0), true);
                     break;
                 case 'wood':
-                    target.addResource(0, value - (target.items[0] || 0), true);
+                    target.addResource(0, value - (target.wood || 0), true);
                     break;
                 case 'stone':
-                    target.addResource(1, value - (target.items[1] || 0), true);
+                    target.addResource(2, value - (target.stone || 0), true);
                     break;
                 case 'gold':
                 case 'points':
-                    target.addResource(3, value - (target.items[3] || 0), true);
+                    target.addResource(3, value - (target.gold || 0), true);
                     break;
                 case 'kills':
                     if (value === null) {
@@ -606,12 +648,38 @@ export class AdminCommands {
         }
         
         targets.forEach(target => {
-            if (target.alive) {
-                target.changeHealth(-target.health, null);
-            }
+            this.forceKill(target);
         });
         
         return { success: true, message: `Killed ${targets.length} player(s)` };
+    }
+
+    handleSmite(params, player) {
+        let targets;
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+        
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+        
+        targets.forEach(target => {
+            if (target.alive) {
+                this.game.server.broadcast('SMITE', target.sid, Math.round(target.x), Math.round(target.y));
+                
+                const wasInvincible = target.isInvincible;
+                target.isInvincible = false;
+                target.bypassShield = true;
+                target.changeHealth(-target.health, target);
+                target.isInvincible = wasInvincible;
+                target.bypassShield = false;
+            }
+        });
+        
+        return { success: true, message: `Smited ${targets.length} player(s)` };
     }
 
     handleKick(params, player) {
@@ -627,8 +695,13 @@ export class AdminCommands {
         
         targets.forEach(target => {
             if (target.socket) {
-                target.socket.close();
-                target.socket = null;
+                target.send('KICKED', 'You have been kicked by an admin');
+                setTimeout(() => {
+                    if (target.socket) {
+                        target.socket.close();
+                        target.socket = null;
+                    }
+                }, 100);
             }
         });
         
@@ -652,8 +725,13 @@ export class AdminCommands {
                 const ip = target.ipAddress || 'unknown';
                 this.bannedIPs.set(ip, Date.now() + duration * 1000);
                 if (target.socket) {
-                    target.socket.close();
-                    target.socket = null;
+                    target.send('BANNED', duration);
+                    setTimeout(() => {
+                        if (target.socket) {
+                            target.socket.close();
+                            target.socket = null;
+                        }
+                    }, 100);
                 }
             }
         });
@@ -735,28 +813,53 @@ export class AdminCommands {
     }
 
     handleLowDamage(params, player) {
-        if (params.length < 2) {
-            return { success: false, message: 'Usage: /lowdmg [player ID] [seconds]' };
+        let duration = 30;
+        let targetParam = null;
+
+        if (params.length >= 1) {
+            const firstParam = parseInt(params[0]);
+            if (Number.isFinite(firstParam) && firstParam > 0) {
+                duration = firstParam;
+                targetParam = params[1] || null;
+            } else if (params[0].toLowerCase() === 'all' || params[0].toLowerCase() === 'others') {
+                targetParam = params[0];
+            } else {
+                const parsed = parseInt(params[0]);
+                if (Number.isFinite(parsed)) {
+                    targetParam = params[0];
+                }
+            }
         }
-        
-        const targets = this.getTargetPlayer(params[0]);
-        const duration = parseInt(params[1]) * 1000;
-        
+
+        let targets = [];
+        if (!targetParam) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(targetParam, player);
+        }
+
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
         }
-        
+
         targets.forEach(target => {
-            const result = this.setCustomDamage(target, -0.1);
-            if (!result.success) {
-                throw new Error(result.error);
+            if (target.lowDamageTimeout) {
+                clearTimeout(target.lowDamageTimeout);
             }
-            setTimeout(() => {
+
+            target.customDamage = -0.1;
+            target.send('6', -1, `Low damage mode enabled for ${duration} seconds`);
+
+            target.lowDamageTimeout = setTimeout(() => {
                 target.customDamage = null;
-            }, duration);
+                target.lowDamageTimeout = null;
+                if (target.alive) {
+                    target.send('6', -1, 'Low damage mode expired');
+                }
+            }, duration * 1000);
         });
-        
-        return { success: true, message: `Applied low damage for ${params[1]}s to ${targets.length} player(s)` };
+
+        return { success: true, message: `Applied low damage for ${duration}s to ${targets.length} player(s)` };
     }
 
     handleStrongBonk(params, player) {
@@ -1009,10 +1112,10 @@ export class AdminCommands {
         
         targets.forEach(target => {
             target.animalMode = 'cow';
-            this.game.server.broadcast('AM', target.sid, 'cow');
+            this.game.server.broadcast('MM', target.sid, 'cow');
             setTimeout(() => {
                 target.animalMode = null;
-                this.game.server.broadcast('AM', target.sid, null);
+                this.game.server.broadcast('MM', target.sid, null);
             }, duration);
         });
         
@@ -1034,10 +1137,10 @@ export class AdminCommands {
         
         targets.forEach(target => {
             target.animalMode = animal;
-            this.game.server.broadcast('AM', target.sid, animal);
+            this.game.server.broadcast('MM', target.sid, animal);
             setTimeout(() => {
                 target.animalMode = null;
-                this.game.server.broadcast('AM', target.sid, null);
+                this.game.server.broadcast('MM', target.sid, null);
             }, duration);
         });
         
@@ -1051,7 +1154,7 @@ export class AdminCommands {
         if (params.length < 1) {
             targets = [player];
         } else {
-            targets = this.getTargetPlayer(params[0]);
+            targets = this.getTargetPlayer(params[0], player);
             
             if (targets.length === 0) {
                 return { success: false, message: 'Player not found' };
@@ -1063,8 +1166,8 @@ export class AdminCommands {
                 // Broadcast explosion animation
                 this.game.server.broadcast('EX', target.sid, target.x, target.y);
                 
-                // Kill the player
-                target.changeHealth(-target.health, null);
+                // Kill the player (bypass shield)
+                this.forceKill(target);
             }
         });
         
@@ -1225,7 +1328,7 @@ export class AdminCommands {
     }
 
     handleInvincible(params, player) {
-        const targets = params.length > 0 ? this.getTargetPlayer(params[0]) : [player];
+        const targets = params.length > 0 ? this.getTargetPlayer(params[0], player) : [player];
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
@@ -1563,5 +1666,664 @@ export class AdminCommands {
         }
         
         return { success: true, message: `Spawned ${amount} stone mine(s) on your location` };
+    }
+
+    handleSuperHammer(params, player) {
+        let targets = [];
+        
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            const targetId = params[0].toLowerCase();
+            if (targetId === 'all' || targetId === 'every') {
+                targets = this.game.players.filter(p => p.alive);
+            } else if (targetId === 'others') {
+                targets = this.game.players.filter(p => p.alive && p !== player);
+            } else {
+                const id = parseInt(params[0]);
+                const target = this.game.players.find(p => p.sid === id && p.alive);
+                if (target) {
+                    targets = [target];
+                }
+            }
+        }
+        
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+        
+        targets.forEach(target => {
+            target.weapons[1] = 16;
+            target.weaponIndex = 16;
+            target.hasSuperHammer = true;
+            
+            this.game.server.broadcast('SH', target.sid, target.x, target.y);
+        });
+        
+        return { success: true, message: `Gave super hammer to ${targets.length} player(s)` };
+    }
+
+    handleMobMode(params, player) {
+        const animalMap = {
+            'cow': { index: 0, health: 500 },
+            'pig': { index: 1, health: 800 },
+            'bull': { index: 2, health: 1800 },
+            'bully': { index: 3, health: 2800 },
+            'wolf': { index: 4, health: 300 },
+            'quack': { index: 5, health: 300 },
+            'moostafa': { index: 6, health: 18000 },
+            'treasure': { index: 7, health: 20000 },
+            'moofie': { index: 8, health: 7000 },
+            'sid': { index: 9, health: 25000 },
+            'vince': { index: 10, health: 22000 },
+            'sheep': { index: 11, health: 800 }
+        };
+
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /mobmode [animal] OR /mobmode [animal] [seconds] OR /mobmode [animal] [seconds] [player id|others|all]' };
+        }
+
+        const animalName = params[0].toLowerCase();
+        const animalData = animalMap[animalName];
+
+        if (!animalData) {
+            const validAnimals = Object.keys(animalMap).join(', ');
+            return { success: false, message: `Unknown animal: ${animalName}. Valid animals: ${validAnimals}` };
+        }
+
+        let duration = 30;
+        let targets = [player];
+
+        if (params.length >= 2) {
+            const parsedDuration = parseInt(params[1]);
+            if (Number.isFinite(parsedDuration) && parsedDuration > 0) {
+                duration = parsedDuration;
+            }
+        }
+
+        if (params.length >= 3) {
+            targets = this.getTargetPlayer(params[2], player);
+            if (targets.length === 0) {
+                return { success: false, message: 'Player not found' };
+            }
+        }
+
+        targets.forEach(target => {
+            if (target.mobModeTimeout) {
+                clearTimeout(target.mobModeTimeout);
+            }
+
+            const originalHealth = target.maxHealth;
+            const originalHealthCurrent = target.health;
+
+            target.mobMode = animalName;
+            target.mobModeIndex = animalData.index;
+            target.maxHealth = animalData.health;
+            target.health = animalData.health;
+
+            this.game.server.broadcast('MM', target.sid, animalName, animalData.index);
+            target.send('H', target.sid, target.health);
+
+            target.mobModeTimeout = setTimeout(() => {
+                target.mobMode = null;
+                target.mobModeIndex = null;
+                target.maxHealth = originalHealth;
+                target.health = Math.min(target.health, originalHealth);
+                target.mobModeTimeout = null;
+                this.game.server.broadcast('MM', target.sid, null, null);
+                target.send('H', target.sid, target.health);
+            }, duration * 1000);
+        });
+
+        return { success: true, message: `Transformed ${targets.length} player(s) into ${animalName} for ${duration} seconds` };
+    }
+
+    handleClearBuilds(params, player) {
+        let ownerFilter;
+        let message;
+
+        if (params.length < 1) {
+            ownerFilter = (obj) => obj.owner && obj.owner.sid === player.sid;
+            message = 'Destroyed all your buildings';
+        } else {
+            const targetId = params[0].toLowerCase();
+
+            if (targetId === 'all' || targetId === 'every') {
+                ownerFilter = (obj) => obj.owner !== null && obj.owner !== undefined;
+                message = 'Destroyed all buildings';
+            } else if (targetId === 'others') {
+                ownerFilter = (obj) => obj.owner && obj.owner.sid !== player.sid;
+                message = 'Destroyed all other players\' buildings';
+            } else {
+                const id = parseInt(targetId);
+                const targetPlayer = this.game.players.find(p => p.sid === id);
+                if (!targetPlayer) {
+                    return { success: false, message: 'Player not found' };
+                }
+                ownerFilter = (obj) => obj.owner && obj.owner.sid === id;
+                message = `Destroyed all buildings owned by ${targetPlayer.name}`;
+            }
+        }
+
+        let destroyedCount = 0;
+        const objectsToDestroy = [];
+
+        for (const obj of this.game.game_objects) {
+            if (obj.active && obj.owner && ownerFilter(obj)) {
+                objectsToDestroy.push(obj);
+            }
+        }
+
+        for (const obj of objectsToDestroy) {
+            if (obj.owner) {
+                obj.owner.changeItemCount(obj.group.id, -1);
+            }
+            this.game.object_manager.disableObj(obj);
+            this.game.server.broadcast('Q', obj.sid);
+            destroyedCount++;
+        }
+
+        return { success: true, message: `${message} (${destroyedCount} objects)` };
+    }
+
+    handleDisarm(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        let enabledCount = 0;
+        let disabledCount = 0;
+
+        targets.forEach(target => {
+            target.isDisarmed = !target.isDisarmed;
+            if (target.isDisarmed) {
+                enabledCount++;
+                target.send('6', -1, 'You have been disarmed - attacking and building disabled');
+            } else {
+                disabledCount++;
+                target.send('6', -1, 'You have been re-armed - attacking and building enabled');
+            }
+        });
+
+        if (enabledCount > 0 && disabledCount > 0) {
+            return { success: true, message: `Toggled disarm for ${targets.length} player(s) (${enabledCount} disarmed, ${disabledCount} re-armed)` };
+        } else if (enabledCount > 0) {
+            return { success: true, message: `Disarmed ${enabledCount} player(s)` };
+        } else {
+            return { success: true, message: `Re-armed ${disabledCount} player(s)` };
+        }
+    }
+
+    handleClearInventory(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        targets.forEach(target => {
+            target.wood = 0;
+            target.stone = 0;
+            target.food = 0;
+            target.points = 0;
+
+            target.send('N', 'wood', 0, 1);
+            target.send('N', 'stone', 0, 1);
+            target.send('N', 'food', 0, 1);
+            target.send('N', 'points', 0, 1);
+        });
+
+        if (params.length < 1) {
+            return { success: true, message: 'Cleared your inventory' };
+        }
+        return { success: true, message: `Cleared inventory for ${targets.length} player(s)` };
+    }
+
+    handleTeleportClick(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        let enabledCount = 0;
+        let disabledCount = 0;
+
+        targets.forEach(target => {
+            target.teleportClickMode = !target.teleportClickMode;
+            if (target.teleportClickMode) {
+                enabledCount++;
+                target.send('TC', 1);
+            } else {
+                disabledCount++;
+                target.send('TC', 0);
+            }
+        });
+
+        if (enabledCount > 0 && disabledCount > 0) {
+            return { success: true, message: `Toggled teleport-click for ${targets.length} player(s) (${enabledCount} enabled, ${disabledCount} disabled)` };
+        } else if (enabledCount > 0) {
+            return { success: true, message: `Enabled teleport-click for ${enabledCount} player(s)` };
+        } else {
+            return { success: true, message: `Disabled teleport-click for ${disabledCount} player(s)` };
+        }
+    }
+
+    handleGiveWeapon(params, player) {
+        const weaponMap = {
+            'katana': { id: 4, type: 0 },
+            'hammer': { id: 10, type: 1 },
+            'great axe': { id: 2, type: 0 },
+            'greataxe': { id: 2, type: 0 },
+            'musket': { id: 15, type: 1 },
+            'bow': { id: 9, type: 1 },
+            'stick': { id: 8, type: 0 },
+            'sword': { id: 3, type: 0 },
+            'spear': { id: 5, type: 0 },
+            'daggers': { id: 7, type: 0 },
+            'dagger': { id: 7, type: 0 },
+            'bat': { id: 6, type: 0 }
+        };
+
+        if (params.length < 1) {
+            const validWeapons = Object.keys(weaponMap).filter(w => !w.includes(' ') || w === 'great axe').join(', ');
+            return { success: false, message: `Usage: /giveweapon [weapon] [optional: player id|others|all]\nValid weapons: ${validWeapons}` };
+        }
+
+        let weaponName = params[0].toLowerCase();
+        let targetParam = params[1];
+        
+        if (params.length >= 2 && (weaponName === 'great' && params[1].toLowerCase() === 'axe')) {
+            weaponName = 'great axe';
+            targetParam = params[2];
+        }
+
+        const weaponData = weaponMap[weaponName];
+        if (!weaponData) {
+            const validWeapons = Object.keys(weaponMap).filter(w => !w.includes(' ') || w === 'great axe').join(', ');
+            return { success: false, message: `Unknown weapon: ${weaponName}. Valid weapons: ${validWeapons}` };
+        }
+
+        let targets = [];
+        if (!targetParam) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(targetParam, player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        targets.forEach(target => {
+            target.weapons[weaponData.type] = weaponData.id;
+            target.weaponIndex = weaponData.id;
+        });
+
+        return { success: true, message: `Gave ${weaponName} to ${targets.length} player(s)` };
+    }
+
+    handleSetRange(params, player) {
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /setrange [value|normal] [optional: player id|others|all]' };
+        }
+
+        const valueStr = params[0].toLowerCase();
+        let value = null;
+
+        if (valueStr === 'normal' || valueStr === 'reset') {
+            value = null;
+        } else {
+            value = parseFloat(valueStr);
+            if (!Number.isFinite(value) || value <= 0) {
+                return { success: false, message: 'Range must be a positive number or "normal"' };
+            }
+        }
+
+        let targets = [];
+        if (params.length < 2) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[1], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        targets.forEach(target => {
+            target.customWeaponRange = value;
+        });
+
+        const message = value === null 
+            ? `Reset weapon range to normal for ${targets.length} player(s)`
+            : `Set weapon range to ${value} for ${targets.length} player(s)`;
+
+        return { success: true, message };
+    }
+
+    handleGatling(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        let enabledCount = 0;
+        let disabledCount = 0;
+
+        targets.forEach(target => {
+            target.gatlingMode = !target.gatlingMode;
+            if (target.gatlingMode) {
+                enabledCount++;
+                target.send('6', -1, 'Gatling mode enabled - infinite fire rate!');
+            } else {
+                disabledCount++;
+                target.send('6', -1, 'Gatling mode disabled');
+            }
+        });
+
+        if (enabledCount > 0 && disabledCount > 0) {
+            return { success: true, message: `Toggled gatling mode for ${targets.length} player(s) (${enabledCount} enabled, ${disabledCount} disabled)` };
+        } else if (enabledCount > 0) {
+            return { success: true, message: `Enabled gatling mode for ${enabledCount} player(s)` };
+        } else {
+            return { success: true, message: `Disabled gatling mode for ${disabledCount} player(s)` };
+        }
+    }
+
+    handleReflect(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        let enabledCount = 0;
+        let disabledCount = 0;
+
+        targets.forEach(target => {
+            target.reflectMode = !target.reflectMode;
+            if (target.reflectMode) {
+                enabledCount++;
+                target.send('6', -1, 'Reflect mode enabled - damage will be reflected back!');
+            } else {
+                disabledCount++;
+                target.send('6', -1, 'Reflect mode disabled');
+            }
+        });
+
+        if (enabledCount > 0 && disabledCount > 0) {
+            return { success: true, message: `Toggled reflect mode for ${targets.length} player(s) (${enabledCount} enabled, ${disabledCount} disabled)` };
+        } else if (enabledCount > 0) {
+            return { success: true, message: `Enabled reflect mode for ${enabledCount} player(s)` };
+        } else {
+            return { success: true, message: `Disabled reflect mode for ${disabledCount} player(s)` };
+        }
+    }
+
+    handleInstabreak(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        let enabledCount = 0;
+        let disabledCount = 0;
+
+        targets.forEach(target => {
+            target.instaBreak = !target.instaBreak;
+            if (target.instaBreak) {
+                enabledCount++;
+                target.send('6', -1, 'Instabreak enabled - one-hit building destruction!');
+            } else {
+                disabledCount++;
+                target.send('6', -1, 'Instabreak disabled');
+            }
+        });
+
+        if (enabledCount > 0 && disabledCount > 0) {
+            return { success: true, message: `Toggled instabreak for ${targets.length} player(s) (${enabledCount} enabled, ${disabledCount} disabled)` };
+        } else if (enabledCount > 0) {
+            return { success: true, message: `Enabled instabreak for ${enabledCount} player(s)` };
+        } else {
+            return { success: true, message: `Disabled instabreak for ${disabledCount} player(s)` };
+        }
+    }
+
+    handleGhost(params, player) {
+        let duration = 30;
+        let targetParam = null;
+
+        if (params.length >= 1) {
+            const firstParam = parseInt(params[0]);
+            if (Number.isFinite(firstParam) && firstParam > 0 && firstParam <= 3600) {
+                duration = firstParam;
+                targetParam = params[1] || null;
+            } else if (params[0].toLowerCase() === 'all' || params[0].toLowerCase() === 'others') {
+                targetParam = params[0];
+            } else {
+                const parsed = parseInt(params[0]);
+                if (Number.isFinite(parsed)) {
+                    targetParam = params[0];
+                }
+            }
+        }
+
+        let targets = [];
+        if (!targetParam) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(targetParam, player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        targets.forEach(target => {
+            if (target.ghostModeTimeout) {
+                clearTimeout(target.ghostModeTimeout);
+            }
+
+            target.ghostMode = true;
+            target.send('6', -1, `Ghost mode enabled for ${duration} seconds - no-clip through walls!`);
+
+            target.ghostModeTimeout = setTimeout(() => {
+                target.ghostMode = false;
+                target.ghostModeTimeout = null;
+                if (target.alive) {
+                    target.send('6', -1, 'Ghost mode expired');
+                }
+            }, duration * 1000);
+        });
+
+        return { success: true, message: `Enabled ghost mode for ${targets.length} player(s) for ${duration} seconds` };
+    }
+
+    handleSethealth(params, player) {
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /sethealth [amount] [optional: player id|others|all]' };
+        }
+
+        const amount = parseFloat(params[0]);
+
+        if (!Number.isFinite(amount) || amount < 0) {
+            return { success: false, message: 'Health must be a non-negative number' };
+        }
+
+        let targets = [];
+        if (params.length < 2) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[1], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        targets.forEach(target => {
+            if (amount > target.maxHealth) {
+                target.maxHealth = amount;
+            }
+            target.health = amount;
+
+            for (let i = 0; i < this.game.players.length; ++i) {
+                if (target.sentTo[this.game.players[i].id]) {
+                    this.game.players[i].send('O', target.sid, Math.round(target.health));
+                }
+            }
+            target.send('6', -1, `Health set to ${Math.round(amount)}`);
+        });
+
+        return { success: true, message: `Set health to ${Math.round(amount)} for ${targets.length} player(s)` };
+    }
+
+    handleInfiniteBuild(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        let enabledCount = 0;
+        let disabledCount = 0;
+
+        targets.forEach(target => {
+            target.infiniteBuild = !target.infiniteBuild;
+            if (target.infiniteBuild) {
+                enabledCount++;
+                target.send('6', -1, 'Infinite build enabled - zero-cost building!');
+            } else {
+                disabledCount++;
+                target.send('6', -1, 'Infinite build disabled');
+            }
+        });
+
+        if (enabledCount > 0 && disabledCount > 0) {
+            return { success: true, message: `Toggled infinite build for ${targets.length} player(s) (${enabledCount} enabled, ${disabledCount} disabled)` };
+        } else if (enabledCount > 0) {
+            return { success: true, message: `Enabled infinite build for ${enabledCount} player(s)` };
+        } else {
+            return { success: true, message: `Disabled infinite build for ${disabledCount} player(s)` };
+        }
+    }
+
+    handleAntiKnockback(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        let enabledCount = 0;
+        let disabledCount = 0;
+
+        targets.forEach(target => {
+            target.antiKnockback = !target.antiKnockback;
+            if (target.antiKnockback) {
+                enabledCount++;
+                target.send('6', -1, 'Anti-knockback enabled - you cannot be pushed!');
+            } else {
+                disabledCount++;
+                target.send('6', -1, 'Anti-knockback disabled');
+            }
+        });
+
+        if (enabledCount > 0 && disabledCount > 0) {
+            return { success: true, message: `Toggled anti-knockback for ${targets.length} player(s) (${enabledCount} enabled, ${disabledCount} disabled)` };
+        } else if (enabledCount > 0) {
+            return { success: true, message: `Enabled anti-knockback for ${enabledCount} player(s)` };
+        } else {
+            return { success: true, message: `Disabled anti-knockback for ${disabledCount} player(s)` };
+        }
+    }
+
+    handleNoclip(params, player) {
+        let targets = [];
+
+        if (params.length < 1) {
+            targets = [player];
+        } else {
+            targets = this.getTargetPlayer(params[0], player);
+        }
+
+        if (targets.length === 0) {
+            return { success: false, message: 'Player not found' };
+        }
+
+        let enabledCount = 0;
+        let disabledCount = 0;
+
+        targets.forEach(target => {
+            target.noclipMode = !target.noclipMode;
+            if (target.noclipMode) {
+                enabledCount++;
+                target.send('6', -1, 'Noclip enabled - walk through structures!');
+            } else {
+                disabledCount++;
+                target.send('6', -1, 'Noclip disabled');
+            }
+        });
+
+        if (enabledCount > 0 && disabledCount > 0) {
+            return { success: true, message: `Toggled noclip for ${targets.length} player(s) (${enabledCount} enabled, ${disabledCount} disabled)` };
+        } else if (enabledCount > 0) {
+            return { success: true, message: `Enabled noclip for ${enabledCount} player(s)` };
+        } else {
+            return { success: true, message: `Disabled noclip for ${disabledCount} player(s)` };
+        }
     }
 }

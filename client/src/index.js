@@ -84,7 +84,14 @@ function connectSocketIfReady() {
 }
 
 function connectSocket() {
-    let wsAddress = window.location.href.replace(/^http:/, "ws:").replace(/^https:/, "wss:");
+    let wsAddress;
+    if (window.__MOOMOO_CONFIG__ && window.__MOOMOO_CONFIG__.WS_URL) {
+        wsAddress = window.__MOOMOO_CONFIG__.WS_URL;
+    } else if (typeof WS_SERVER_URL !== 'undefined' && WS_SERVER_URL) {
+        wsAddress = WS_SERVER_URL;
+    } else {
+        wsAddress = window.location.href.replace(/^http:/, "ws:").replace(/^https:/, "wss:");
+    }
 
     io.connect(wsAddress, function (error) {
         pingSocket();
@@ -140,7 +147,13 @@ function connectSocket() {
         "SHOW_WARNING": showWarning,
         "IX": showInvincibleText,
         "IU": updateInvincibleStatus,
-        "HL": showHealText
+        "HL": showHealText,
+        "SMITE": handleSmite,
+        "SH": handleSuperHammer,
+        "KICKED": handleKicked,
+        "BANNED": handleBanned,
+        "TC": handleTeleportClick,
+        "MM": handleMobMode
     });
 }
 
@@ -228,6 +241,14 @@ var alliances = [];
 var gameObjects = [];
 var projectiles = [];
 var explosions = [];
+var smiteEffects = [];
+var superHammerEffects = [];
+var teleportClickMode = false;
+var mobModeActive = false;
+var mobModeAnimalType = null;
+var kickedMessage = null;
+var bannedCountdown = null;
+var bannedEndTime = null;
 var projectileManager = new ProjectileManager(Projectile, projectiles, players, ais, objectManager, items, config, UTILS);
 var AiManager = require("./data/aiManager.js");
 var AI = require("./data/ai.js");
@@ -1612,6 +1633,16 @@ function gameInput(e) {
 gameCanvas.addEventListener('mousedown', mouseDown, false);
 function mouseDown(e) {
     setUsingTouch(false);
+    
+    if (teleportClickMode && player) {
+        var camX = player.x - (screenWidth / 2);
+        var camY = player.y - (screenHeight / 2);
+        var worldX = Math.round(camX + e.clientX);
+        var worldY = Math.round(camY + e.clientY);
+        io.send("TP", worldX, worldY);
+        return;
+    }
+    
     attackState = 1;
     sendAtckState();
 }
@@ -1830,6 +1861,151 @@ function showText(x, y, value, type) {
 
 function showHealText(x, y, value) {
     textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), "#8ecc51");
+}
+
+function handleSmite(sid, x, y) {
+    try {
+        textManager.showText(x, y, 60, 0.2, 800, "SMITED", "#00bfff");
+        
+        smiteEffects.push({
+            x: x,
+            y: y,
+            startTime: Date.now(),
+            duration: 600,
+            scale: 150
+        });
+    } catch (e) {
+        console.error("Error in handleSmite:", e);
+    }
+}
+
+function handleSuperHammer(sid) {
+    try {
+        var tmpPlayer = findPlayerBySID(sid);
+        if (tmpPlayer) {
+            superHammerEffects.push({
+                sid: sid,
+                x: tmpPlayer.x,
+                y: tmpPlayer.y,
+                startTime: Date.now(),
+                duration: 400
+            });
+        }
+    } catch (e) {
+        console.error("Error in handleSuperHammer:", e);
+    }
+}
+
+function handleKicked(message) {
+    try {
+        kickedMessage = message || "You have been kicked by an admin";
+        
+        var kickOverlay = document.createElement('div');
+        kickOverlay.id = 'kickOverlay';
+        kickOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;';
+        
+        var kickText = document.createElement('div');
+        kickText.style.cssText = 'color:#ff4444;font-size:48px;font-family:"Hammersmith One",sans-serif;text-align:center;margin-bottom:20px;';
+        kickText.textContent = kickedMessage;
+        kickOverlay.appendChild(kickText);
+        
+        var subText = document.createElement('div');
+        subText.style.cssText = 'color:#ffffff;font-size:24px;font-family:"Hammersmith One",sans-serif;';
+        subText.textContent = 'Disconnecting...';
+        kickOverlay.appendChild(subText);
+        
+        document.body.appendChild(kickOverlay);
+        
+        setTimeout(function() {
+            disconnect("Kicked by admin");
+        }, 3000);
+    } catch (e) {
+        console.error("Error in handleKicked:", e);
+    }
+}
+
+function handleBanned(seconds, message) {
+    try {
+        bannedEndTime = Date.now() + (seconds * 1000);
+        bannedCountdown = seconds;
+        
+        var banOverlay = document.createElement('div');
+        banOverlay.id = 'banOverlay';
+        banOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;';
+        
+        var banText = document.createElement('div');
+        banText.style.cssText = 'color:#ff0000;font-size:56px;font-family:"Hammersmith One",sans-serif;text-align:center;margin-bottom:20px;';
+        banText.textContent = 'YOU HAVE BEEN BANNED';
+        banOverlay.appendChild(banText);
+        
+        var reasonText = document.createElement('div');
+        reasonText.style.cssText = 'color:#ffffff;font-size:28px;font-family:"Hammersmith One",sans-serif;text-align:center;margin-bottom:30px;';
+        reasonText.textContent = message || 'Banned by admin';
+        banOverlay.appendChild(reasonText);
+        
+        var countdownText = document.createElement('div');
+        countdownText.id = 'banCountdown';
+        countdownText.style.cssText = 'color:#ffcc00;font-size:72px;font-family:"Hammersmith One",sans-serif;';
+        countdownText.textContent = seconds;
+        banOverlay.appendChild(countdownText);
+        
+        var countdownLabel = document.createElement('div');
+        countdownLabel.style.cssText = 'color:#888888;font-size:20px;font-family:"Hammersmith One",sans-serif;margin-top:10px;';
+        countdownLabel.textContent = 'seconds until disconnect';
+        banOverlay.appendChild(countdownLabel);
+        
+        document.body.appendChild(banOverlay);
+        
+        var banInterval = setInterval(function() {
+            var remaining = Math.ceil((bannedEndTime - Date.now()) / 1000);
+            var countdownEl = document.getElementById('banCountdown');
+            if (countdownEl) {
+                countdownEl.textContent = Math.max(0, remaining);
+            }
+            if (remaining <= 0) {
+                clearInterval(banInterval);
+                disconnect("Banned");
+            }
+        }, 100);
+    } catch (e) {
+        console.error("Error in handleBanned:", e);
+    }
+}
+
+function handleTeleportClick(enabled) {
+    try {
+        teleportClickMode = enabled ? true : false;
+        
+        var existingIndicator = document.getElementById('teleportIndicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        if (teleportClickMode) {
+            var indicator = document.createElement('div');
+            indicator.id = 'teleportIndicator';
+            indicator.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:rgba(128,0,255,0.8);color:#fff;padding:10px 20px;border-radius:8px;font-size:18px;font-family:"Hammersmith One",sans-serif;z-index:1000;';
+            indicator.textContent = 'TELEPORT MODE: Click to teleport';
+            document.body.appendChild(indicator);
+        }
+    } catch (e) {
+        console.error("Error in handleTeleportClick:", e);
+    }
+}
+
+function handleMobMode(animalType, enabled) {
+    try {
+        mobModeActive = enabled ? true : false;
+        mobModeAnimalType = enabled ? animalType : null;
+        
+        if (mobModeActive) {
+            textManager.showText(player.x, player.y - 50, 50, 0.15, 600, "MOB MODE: " + animalType, "#ff9900");
+        } else {
+            textManager.showText(player.x, player.y - 50, 50, 0.15, 600, "MOB MODE OFF", "#ffffff");
+        }
+    } catch (e) {
+        console.error("Error in handleMobMode:", e);
+    }
 }
 
 function showInvincibleText(x, y) {
@@ -2341,6 +2517,8 @@ function updateGame() {
         renderGameObjects(2, xOffset, yOffset);
         renderGameObjects(3, xOffset, yOffset);
         renderExplosions(xOffset, yOffset);
+        renderSmiteEffects(xOffset, yOffset);
+        renderSuperHammerEffects(xOffset, yOffset);
 
         mainContext.fillStyle = "#000";
         mainContext.globalAlpha = 0.09;
@@ -2646,6 +2824,122 @@ function renderExplosions(xOffset, yOffset) {
                     mainContext.stroke();
                 }
             }
+            
+            mainContext.restore();
+        }
+    }
+}
+
+function renderSmiteEffects(xOffset, yOffset) {
+    for (var i = smiteEffects.length - 1; i >= 0; --i) {
+        var smite = smiteEffects[i];
+        var elapsed = Date.now() - smite.startTime;
+        
+        if (elapsed >= smite.duration) {
+            smiteEffects.splice(i, 1);
+            continue;
+        }
+        
+        var progress = elapsed / smite.duration;
+        var screenX = smite.x - xOffset;
+        var screenY = smite.y - yOffset;
+        
+        if (isOnScreen(screenX, screenY, smite.scale)) {
+            mainContext.save();
+            mainContext.globalAlpha = 1 - progress;
+            
+            var boltHeight = smite.scale * 2;
+            var boltWidth = 40 + (20 * (1 - progress));
+            
+            mainContext.strokeStyle = "#00bfff";
+            mainContext.lineWidth = 4 + (2 * (1 - progress));
+            mainContext.lineCap = "round";
+            mainContext.lineJoin = "round";
+            
+            mainContext.beginPath();
+            var topY = screenY - boltHeight;
+            mainContext.moveTo(screenX, topY);
+            
+            var segments = 6;
+            var segmentHeight = boltHeight / segments;
+            for (var j = 1; j <= segments; j++) {
+                var offsetX = (Math.random() - 0.5) * boltWidth * (1 - progress * 0.5);
+                if (j === segments) offsetX = 0;
+                mainContext.lineTo(screenX + offsetX, topY + segmentHeight * j);
+            }
+            mainContext.stroke();
+            
+            mainContext.strokeStyle = "#ffffff";
+            mainContext.lineWidth = 2;
+            mainContext.beginPath();
+            mainContext.moveTo(screenX, topY);
+            for (var j = 1; j <= segments; j++) {
+                var offsetX = (Math.random() - 0.5) * boltWidth * 0.5 * (1 - progress * 0.5);
+                if (j === segments) offsetX = 0;
+                mainContext.lineTo(screenX + offsetX, topY + segmentHeight * j);
+            }
+            mainContext.stroke();
+            
+            mainContext.fillStyle = "rgba(0, 191, 255, " + (0.3 * (1 - progress)) + ")";
+            mainContext.beginPath();
+            mainContext.arc(screenX, screenY, 60 * (1 - progress * 0.5), 0, Math.PI * 2);
+            mainContext.fill();
+            
+            mainContext.restore();
+        }
+    }
+}
+
+function renderSuperHammerEffects(xOffset, yOffset) {
+    for (var i = superHammerEffects.length - 1; i >= 0; --i) {
+        var effect = superHammerEffects[i];
+        var elapsed = Date.now() - effect.startTime;
+        
+        if (elapsed >= effect.duration) {
+            superHammerEffects.splice(i, 1);
+            continue;
+        }
+        
+        var tmpPlayer = findPlayerBySID(effect.sid);
+        if (!tmpPlayer) {
+            superHammerEffects.splice(i, 1);
+            continue;
+        }
+        
+        var progress = elapsed / effect.duration;
+        var screenX = tmpPlayer.x - xOffset;
+        var screenY = tmpPlayer.y - yOffset;
+        
+        if (isOnScreen(screenX, screenY, 100)) {
+            mainContext.save();
+            mainContext.globalAlpha = 0.8 * (1 - progress);
+            
+            var numBolts = 4;
+            for (var j = 0; j < numBolts; j++) {
+                var angle = (Math.PI * 2 * j / numBolts) + (elapsed * 0.01);
+                var radius = 50 + Math.random() * 20;
+                var startX = screenX + Math.cos(angle) * radius;
+                var startY = screenY + Math.sin(angle) * radius;
+                
+                mainContext.strokeStyle = "#ffff00";
+                mainContext.lineWidth = 2;
+                mainContext.beginPath();
+                mainContext.moveTo(startX, startY);
+                
+                var endX = screenX + (Math.random() - 0.5) * 40;
+                var endY = screenY + (Math.random() - 0.5) * 40;
+                var midX = (startX + endX) / 2 + (Math.random() - 0.5) * 30;
+                var midY = (startY + endY) / 2 + (Math.random() - 0.5) * 30;
+                
+                mainContext.lineTo(midX, midY);
+                mainContext.lineTo(endX, endY);
+                mainContext.stroke();
+            }
+            
+            mainContext.fillStyle = "rgba(255, 255, 0, " + (0.15 * (1 - progress)) + ")";
+            mainContext.beginPath();
+            mainContext.arc(screenX, screenY, 70 * (1 + progress * 0.3), 0, Math.PI * 2);
+            mainContext.fill();
             
             mainContext.restore();
         }

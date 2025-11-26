@@ -218,6 +218,12 @@ wss.on("connection", async (socket, req) => {
                         break;
                     }
 
+                    if (player.isDisarmed) {
+                        player.mouseState = 0;
+                        player.hits = 0;
+                        break;
+                    }
+
                     player.mouseState = data[0];
                     if (data[0] && player.buildIndex === -1) {
                         player.hits++;
@@ -603,6 +609,26 @@ wss.on("connection", async (socket, req) => {
                     if (!player.alive) break;
 
                     player.resetMoveDir();
+
+                    break;
+                }
+                case "TP": {
+
+                    if (!player.alive) break;
+
+                    if (!player.teleportClickMode) break;
+
+                    const x = data[0];
+                    const y = data[1];
+
+                    if (!UTILS.isNumber(x) || !UTILS.isNumber(y)) break;
+
+                    if (x < 0 || x > config.mapScale || y < 0 || y > config.mapScale) break;
+
+                    player.x = x;
+                    player.y = y;
+                    player.xVel = 0;
+                    player.yVel = 0;
 
                     break;
                 }

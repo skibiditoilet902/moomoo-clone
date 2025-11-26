@@ -399,6 +399,24 @@ exports.weapons = [{
     hideProjectile: true,
     spdMult: 0.6,
     speed: 1500
+}, {
+    id: 16,
+    type: 1,
+    name: "super hammer",
+    desc: "Admin weapon - destroys buildings in 1 hit and kills players instantly",
+    src: "superhammer_1",
+    length: 140,
+    width: 140,
+    xOff: -9,
+    yOff: 25,
+    dmg: 9999,
+    spdMult: 1,
+    range: 100,
+    sDmg: 9999,
+    gather: 1,
+    speed: 200,
+    adminOnly: true,
+    smiteOnHit: true
 }];
 
 module.exports.list = [{

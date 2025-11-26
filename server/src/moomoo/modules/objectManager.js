@@ -266,6 +266,9 @@ export class ObjectManager {
         // CHECK PLAYER COLLISION:
         this.checkCollision = function(player, other, delta) {
             delta = delta || 1;
+            if ((player.ghostMode || player.noclipMode) && !other.isPlayer) {
+                return false;
+            }
             var dx = player.x - other.x;
             var dy = player.y - other.y;
             var tmpLen = player.scale + other.scale;
@@ -290,10 +293,12 @@ export class ObjectManager {
                         }
                         if (other.dmg && other.owner != player && !(other.owner && other.owner.team && other.owner.team == player.team)) {
                             player.changeHealth(-other.dmg, other.owner, other);
-                            var knockMult = other.owner && other.owner.knockbackMultiplier ? other.owner.knockbackMultiplier : 1;
-                            var tmpSpd = 1.5 * (other.weightM || 1) * knockMult;
-                            player.xVel += tmpSpd * mathCOS(tmpDir);
-                            player.yVel += tmpSpd * mathSIN(tmpDir);
+                            if (!player.antiKnockback) {
+                                var knockMult = other.owner && other.owner.knockbackMultiplier ? other.owner.knockbackMultiplier : 1;
+                                var tmpSpd = 1.5 * (other.weightM || 1) * knockMult;
+                                player.xVel += tmpSpd * mathCOS(tmpDir);
+                                player.yVel += tmpSpd * mathSIN(tmpDir);
+                            }
                             if (other.pDmg && !(player.skin && player.skin.poisonRes)) {
                                 player.dmgOverTime.dmg = other.pDmg;
                                 player.dmgOverTime.time = 5;
