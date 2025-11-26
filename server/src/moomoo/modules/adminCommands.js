@@ -1551,7 +1551,7 @@ export class AdminCommands {
         }
         
         for (let i = 0; i < amount; i++) {
-            this.game.objectManager.add(
+            this.game.object_manager.add(
                 Math.floor(Math.random() * 999999),
                 player.x,
                 player.y,
