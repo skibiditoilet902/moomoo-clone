@@ -19,7 +19,14 @@ import { fileURLToPath } from "node:url";
 const app = e();
 
 
-app.use(e.json()); // Add JSON body parser for API requests 
+app.use(e.json());
+
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
 
 const colimit = new ConnectionLimit(4);
 
@@ -34,7 +41,7 @@ const __dirname = path.dirname(__filename);
 
 const CLIENT_DIST_DIR = path.resolve(__dirname, "../../dist/client");
 const INDEX = path.join(CLIENT_DIST_DIR, "html/play.html");
-const PORT = Number(process.env.PORT ?? 8080);
+const PORT = Number(process.env.PORT ?? 5000);
 const HOST = process.env.HOST ?? "0.0.0.0";
 const SERVER_START_TIME = Date.now();
 const SERVER_METADATA = {
