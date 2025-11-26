@@ -240,6 +240,8 @@ export class AdminCommands {
                 return this.handleInvincible(params, player);
             case 'spawn':
                 return this.handleSpawn(params, player);
+            case 'mine':
+                return this.handleMine(params, player);
             case 'reports':
                 return this.handleReports(params, player);
             case 'warn':
