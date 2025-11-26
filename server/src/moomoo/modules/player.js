@@ -617,8 +617,12 @@ export class Player {
                 }
             }
             if (doer && doer.canSee(this)) {
-                // Show damage/heal text (healing shows positive, damage shows negative)
-                doer.send("8", Math.round(this.x), Math.round(this.y), Math.round(amount), 1);
+                // Send damage/heal text with packet type indicator
+                if (amount > 0) {
+                    doer.send("HL", Math.round(this.x), Math.round(this.y), Math.round(amount));
+                } else {
+                    doer.send("8", Math.round(this.x), Math.round(this.y), Math.round(amount), 1);
+                }
             }
             return true;
         };

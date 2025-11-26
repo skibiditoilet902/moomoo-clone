@@ -139,7 +139,8 @@ function connectSocket() {
         "SHOW_IDS": showIDsOnScreen,
         "SHOW_WARNING": showWarning,
         "IX": showInvincibleText,
-        "IU": updateInvincibleStatus
+        "IU": updateInvincibleStatus,
+        "HL": showHealText
     });
 }
 
@@ -1824,8 +1825,11 @@ function setupGame(yourSID) {
 }
 
 function showText(x, y, value, type) {
-    // Damage/healing colors - all values come in positive from server
     textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), "#fff");
+}
+
+function showHealText(x, y, value) {
+    textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), "#8ecc51");
 }
 
 function showInvincibleText(x, y) {
