@@ -1561,7 +1561,7 @@ export class AdminCommands {
                 player.x,
                 player.y,
                 0,
-                50,
+                120,
                 2,
                 mineData,
                 true,
