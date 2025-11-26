@@ -1551,14 +1551,20 @@ export class AdminCommands {
         }
         
         for (let i = 0; i < amount; i++) {
+            const mineData = {
+                name: "mine",
+                health: 100,
+                group: { id: 4, name: "mine" }
+            };
+            
             this.game.object_manager.add(
                 Math.floor(Math.random() * 999999),
                 player.x,
                 player.y,
                 0,
-                30,
-                7,
-                null,
+                40,
+                1,
+                mineData,
                 true,
                 player
             );
