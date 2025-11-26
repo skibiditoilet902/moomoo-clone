@@ -1542,4 +1542,33 @@ export class AdminCommands {
 
         return { success: true, message };
     }
+
+    handleMine(params, player) {
+        const amount = params.length > 0 ? parseInt(params[0]) : 1;
+        
+        if (!Number.isFinite(amount) || amount < 1) {
+            return { success: false, message: 'Usage: /mine [amount (optional)]' };
+        }
+        
+        for (let i = 0; i < amount; i++) {
+            const offsetX = (Math.random() - 0.5) * 100;
+            const offsetY = (Math.random() - 0.5) * 100;
+            const mineX = Math.max(0, Math.min(this.game.config.mapScale, player.x + offsetX));
+            const mineY = Math.max(0, Math.min(this.game.config.mapScale, player.y + offsetY));
+            
+            this.game.objectManager.add(
+                Math.floor(Math.random() * 999999),
+                mineX,
+                mineY,
+                0,
+                30,
+                7,
+                null,
+                true,
+                player
+            );
+        }
+        
+        return { success: true, message: `Spawned ${amount} mine(s) around you` };
+    }
 }
