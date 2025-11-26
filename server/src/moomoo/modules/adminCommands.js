@@ -275,7 +275,6 @@ export class AdminCommands {
             player.isAdmin = true;
             player.adminLevel = 'full';
             
-            // Send all player info to admin
             const allPlayers = this.game.players
                 .filter(p => p.alive)
                 .map(p => ({
@@ -287,7 +286,6 @@ export class AdminCommands {
                     maxHealth: Math.round(p.maxHealth)
                 }));
             
-            // Send special admin packet with player list (only to the admin)
             this.game.server.send(player.id, 'ADMIN_LOGIN', allPlayers);
             
             return {
@@ -302,13 +300,11 @@ export class AdminCommands {
     handleShowIDs(params, player) {
         const mode = params[0] ? params[0].toLowerCase() : 'normal';
         
-        // Handle disable mode
         if (mode === 'disable') {
             this.game.server.send(player.id, 'SHOW_IDS', { action: 'disable' });
             return { success: true, message: 'Player IDs display disabled' };
         }
         
-        // Get all players except the requesting player
         const allPlayers = this.game.players
             .filter(p => p.alive && p !== player)
             .map(p => ({
@@ -320,10 +316,7 @@ export class AdminCommands {
                 maxHealth: Math.round(p.maxHealth)
             }));
         
-        // Determine display mode
         const isToggle = mode === 'toggle';
-        
-        // Send player list to the admin with mode info
         const payload = {
             action: isToggle ? 'toggle' : 'normal',
             players: allPlayers
@@ -1259,7 +1252,7 @@ export class AdminCommands {
             return { success: false, message: 'Amount must be a positive number' };
         }
         
-        // Map animal names to AI type indices
+        // Animal type mappings
         const typeMap = {
             'cow': 0,
             'pig': 1,
